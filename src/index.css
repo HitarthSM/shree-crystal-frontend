@@ -1,0 +1,326 @@
+/* ============================================================
+   Shree Crystal Co-op Society — Base Styles
+   Heritage Saffron Design System
+   ============================================================ */
+
+/* Self-hosted fonts via @fontsource */
+@import '@fontsource/playfair-display/600.css';
+@import '@fontsource/playfair-display/700.css';
+@import '@fontsource/ibm-plex-sans/400.css';
+@import '@fontsource/ibm-plex-sans/500.css';
+@import '@fontsource/jetbrains-mono/400.css';
+@import '@fontsource/jetbrains-mono/500.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================================
+   CSS Custom Properties — Design Tokens
+   ============================================================ */
+:root {
+  /* Colors */
+  --color-deep-saffron: #6B2D00;
+  --color-ivory: #FAF5E8;
+  --color-warm-gold: #C8862C;
+  --color-verdant-green: #2A5C3F;
+  --color-deep-crimson: #8B1A1A;
+  --color-dark-mahogany: #2C1A0E;
+  --color-ledger-rule: rgba(44, 26, 14, 0.12);
+
+  /* Typography */
+  --font-display: 'Playfair Display', Georgia, serif;
+  --font-body: 'IBM Plex Sans', system-ui, sans-serif;
+  --font-data: 'JetBrains Mono', 'Courier New', monospace;
+
+  /* Spacing */
+  --grid-base: 8px;
+  --sidebar-width: 260px;
+
+  /* Transitions */
+  --transition-fast: 120ms ease-out;
+  --transition-normal: 150ms ease-out;
+}
+
+/* ============================================================
+   Base Reset & Typography
+   ============================================================ */
+@layer base {
+  *, *::before, *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    font-family: var(--font-body);
+    font-size: 1rem;
+    line-height: 1.6;
+    color: var(--color-dark-mahogany);
+    background-color: var(--color-ivory);
+    min-height: 100vh;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    line-height: 1.2;
+    color: var(--color-dark-mahogany);
+  }
+
+  /* Minimum font size: 16px for member-facing — never go smaller */
+  p, li, label, input, textarea, select, button {
+    font-size: 1rem;
+  }
+
+  /* Data elements always use mono */
+  .font-data,
+  [data-type="amount"],
+  [data-type="id"],
+  [data-type="date"] {
+    font-family: var(--font-data);
+  }
+
+  /* Respect prefers-reduced-motion EVERYWHERE — no exceptions */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+
+  /* Focus visible — 2px warm gold ring, 2px offset — non-negotiable */
+  :focus-visible {
+    outline: 2px solid var(--color-warm-gold);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  /* Remove default focus for mouse users while keeping for keyboard */
+  :focus:not(:focus-visible) {
+    outline: none;
+  }
+
+  /* Scrollbar styling */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(44, 26, 14, 0.2);
+    border-radius: 3px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(44, 26, 14, 0.35);
+  }
+}
+
+/* ============================================================
+   Component Layer — Reusable Patterns
+   ============================================================ */
+@layer components {
+
+  /* ── Ledger Row (Signature Component) ─────────────────────
+     Every statement, notice, activity entry renders as this.
+     Ruled row + mono columns + optional stamp mark.
+  ──────────────────────────────────────────────────────────── */
+  .ledger-row {
+    @apply flex items-center gap-4 py-3 px-0;
+    border-bottom: 1px solid var(--color-ledger-rule);
+    transition: background-color var(--transition-fast);
+  }
+  .ledger-row:last-child {
+    border-bottom: none;
+  }
+  .ledger-row:hover {
+    background-color: rgba(200, 134, 44, 0.04);
+  }
+  .ledger-row__main {
+    @apply flex-1 min-w-0;
+  }
+  .ledger-row__mono {
+    font-family: var(--font-data);
+    font-size: 0.9375rem;
+    line-height: 1.4;
+    text-align: right;
+    white-space: nowrap;
+    color: var(--color-dark-mahogany);
+  }
+  .ledger-row__mono--amount {
+    color: var(--color-warm-gold);
+    font-weight: 500;
+  }
+
+  /* ── Stamp Mark ───────────────────────────────────────────
+     The brass circular confirmation mark. Only appears on
+     confirmed/published/resolved entries. Never decorative.
+  ──────────────────────────────────────────────────────────── */
+  .stamp-mark {
+    @apply flex-shrink-0 flex items-center justify-center;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 2px solid var(--color-warm-gold);
+    background-color: transparent;
+  }
+  .stamp-mark--filled {
+    background-color: var(--color-warm-gold);
+  }
+  .stamp-mark[data-animate="true"] {
+    animation: stampDrop 150ms ease-out forwards;
+  }
+  @keyframes stampDrop {
+    0%   { transform: scale(1.15) rotate(3deg); opacity: 0; }
+    100% { transform: scale(1) rotate(0deg); opacity: 1; }
+  }
+  /* Placeholder when no stamp — preserves column alignment */
+  .stamp-mark--empty {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+  }
+
+  /* ── Skeleton Loader (Ledger-row shaped) ─────────────────── */
+  .skeleton-row {
+    @apply flex items-center gap-4 py-3;
+    border-bottom: 1px solid var(--color-ledger-rule);
+  }
+  .skeleton-block {
+    background: linear-gradient(
+      90deg,
+      rgba(44, 26, 14, 0.06) 25%,
+      rgba(44, 26, 14, 0.12) 50%,
+      rgba(44, 26, 14, 0.06) 75%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.6s linear infinite;
+    border-radius: 3px;
+  }
+  @keyframes shimmer {
+    0%   { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+
+  /* ── Nav link hover — 120ms brass underline ──────────────── */
+  .nav-link {
+    @apply relative text-body text-ivory/80 transition-colors;
+    transition-duration: 120ms;
+    transition-timing-function: ease-out;
+  }
+  .nav-link::after {
+    content: '';
+    @apply absolute bottom-0 left-0 w-0 h-[2px];
+    background-color: var(--color-warm-gold);
+    transition: width 120ms ease-out;
+  }
+  .nav-link:hover {
+    @apply text-ivory;
+  }
+  .nav-link:hover::after {
+    @apply w-full;
+  }
+  .nav-link--active {
+    @apply text-warm-gold;
+  }
+  .nav-link--active::after {
+    @apply w-full;
+  }
+
+  /* ── Sidebar nav item ─────────────────────────────────────── */
+  .sidebar-item {
+    @apply flex items-center gap-3 px-4 py-3 rounded-none w-full text-left;
+    @apply text-ivory/70 transition-all duration-[120ms] ease-out;
+    border-left: 3px solid transparent;
+    font-family: var(--font-body);
+    font-size: 0.9375rem;
+  }
+  .sidebar-item:hover {
+    @apply text-ivory/95 bg-white/5;
+  }
+  .sidebar-item--active {
+    @apply text-warm-gold bg-white/10;
+    border-left-color: var(--color-warm-gold);
+  }
+
+  /* ── Hero entrance animation ─────────────────────────────── */
+  .animate-hero {
+    animation: fadeSlideUp 400ms ease-out both;
+    animation-delay: 200ms;
+  }
+  .animate-hero-delayed {
+    animation: fadeSlideUp 400ms ease-out both;
+    animation-delay: 350ms;
+  }
+  .animate-hero-btn {
+    animation: fadeSlideUp 400ms ease-out both;
+    animation-delay: 500ms;
+  }
+  @keyframes fadeSlideUp {
+    0%   { opacity: 0; transform: translateY(20px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── Login form slide-in ─────────────────────────────────── */
+  .animate-slide-in-right {
+    animation: slideInRight 350ms ease-out both;
+  }
+  @keyframes slideInRight {
+    0%   { opacity: 0; transform: translateX(30px); }
+    100% { opacity: 1; transform: translateX(0); }
+  }
+
+  /* ── Ledger paper texture background ─────────────────────── */
+  .bg-ledger-paper {
+    background-color: var(--color-ivory);
+    background-image: repeating-linear-gradient(
+      transparent,
+      transparent 31px,
+      rgba(200, 134, 44, 0.06) 31px,
+      rgba(200, 134, 44, 0.06) 32px
+    );
+  }
+
+  /* ── Card ────────────────────────────────────────────────── */
+  .card {
+    @apply bg-ivory rounded-[6px];
+    border: 1px solid rgba(44, 26, 14, 0.1);
+    box-shadow: 0 1px 2px rgba(44, 26, 14, 0.06), 0 1px 0 rgba(44, 26, 14, 0.04);
+  }
+
+  /* ── Badge/Status Pills ──────────────────────────────────── */
+  .badge {
+    @apply inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-[4px];
+    font-family: var(--font-body);
+  }
+  .badge--active    { @apply bg-verdant-green/15 text-verdant-green; }
+  .badge--published { @apply bg-verdant-green/15 text-verdant-green; }
+  .badge--resolved  { @apply bg-verdant-green/15 text-verdant-green; }
+  .badge--pending   { @apply bg-warm-gold/15 text-warm-gold; }
+  .badge--urgent    { @apply bg-deep-crimson text-white; }
+  .badge--suspended { @apply bg-deep-crimson/15 text-deep-crimson; }
+  .badge--general   { @apply bg-dark-mahogany/10 text-dark-mahogany; }
+  .badge--agm       { @apply bg-deep-saffron/10 text-deep-saffron; }
+}
+
+/* ============================================================
+   Utility Layer
+   ============================================================ */
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  /* Touch target minimum — 44x44px */
+  .touch-target {
+    @apply min-h-[44px] min-w-[44px];
+  }
+}
