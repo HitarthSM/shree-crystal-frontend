@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
 
 export type UserRole = 'member' | 'admin' | 'operator' | 'viewer'
 
@@ -13,21 +14,33 @@ export interface AuthUser {
 
 interface AuthState {
   user: AuthUser | null
+  token: string | null
   isAuthenticated: boolean
   isLoading: boolean
   setUser: (user: AuthUser) => void
+  setToken: (token: string) => void
   clearUser: () => void
   setLoading: (loading: boolean) => void
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
-  user: null,
-  isAuthenticated: false,
-  isLoading: true,
+export const useAuthStore = create<AuthState>()(
+  persist(
+    (set) => ({
+      user: null,
+      token: null,
+      isAuthenticated: false,
+      isLoading: false, // Changed to false by default since persist rehydrates it
 
-  setUser: (user) => set({ user, isAuthenticated: true, isLoading: false }),
+      setUser: (user) => set({ user, isAuthenticated: true, isLoading: false }),
 
-  clearUser: () => set({ user: null, isAuthenticated: false, isLoading: false }),
+      setToken: (token) => set({ token }),
 
-  setLoading: (loading) => set({ isLoading: loading }),
-}))
+      clearUser: () => set({ user: null, token: null, isAuthenticated: false, isLoading: false }),
+
+      setLoading: (loading) => set({ isLoading: loading }),
+    }),
+    {
+      name: 'auth-storage', // key in localStorage
+    }
+  )
+)

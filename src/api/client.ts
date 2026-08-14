@@ -11,8 +11,16 @@ export const apiClient = axios.create({
   },
 })
 
-// Request interceptor — nothing needed: token is httpOnly cookie
-apiClient.interceptors.request.use((config) => config)
+import { useAuthStore } from '../store/auth.store'
+
+// Request interceptor — inject token
+apiClient.interceptors.request.use((config) => {
+  const token = useAuthStore.getState().token
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`
+  }
+  return config
+})
 
 // Response interceptor — handle 401 globally
 apiClient.interceptors.response.use(
@@ -20,6 +28,7 @@ apiClient.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       // Clear local auth state and redirect to login
+      useAuthStore.getState().clearUser()
       window.location.href = '/login'
     }
     return Promise.reject(error)

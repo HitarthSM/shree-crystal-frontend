@@ -9,10 +9,7 @@ import { Input } from '@/components/ui/FormControls'
 import { useAuthStore } from '@/store/auth.store'
 import { toast } from '@/components/ui/Toast'
 
-// This would normally call your backend API
-const mockLogin = async (_data: any) => {
-  return new Promise((resolve) => setTimeout(resolve, 1000))
-}
+import { authApi } from '@/api/auth'
 
 const loginSchema = z.object({
   memberId: z.string().min(1, 'Member ID is required'),
@@ -25,7 +22,6 @@ export function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const navigate = useNavigate()
   const location = useLocation()
-  const { setUser } = useAuthStore()
 
   const {
     register,
@@ -37,29 +33,24 @@ export function LoginPage() {
 
   const onSubmit = async (data: LoginForm) => {
     try {
-      await mockLogin(data)
+      const response = await authApi.login(data.memberId, data.password)
       
-      // Mock successful login
-      setUser({
-        id: '1',
-        memberId: data.memberId,
-        name: 'Ramesh Patel',
-        mobile: '+91 98765 43210',
-        role: data.memberId.toLowerCase().includes('admin') ? 'admin' : 'member',
+      toast.success('Credentials verified. Sending OTP...')
+      
+      // Redirect to OTP page passing the tempToken
+      navigate('/login/otp', { 
+        replace: true,
+        state: { 
+          tempToken: response.tempToken,
+          from: location.state?.from 
+        } 
       })
-      
-      toast.success('Logged in successfully')
-      
-      // Redirect to intended destination or default role home
-      const from = location.state?.from?.pathname
-      if (from && from !== '/login') {
-        navigate(from, { replace: true })
+    } catch (error: any) {
+      if (error.response?.status === 401 || error.response?.status === 400) {
+        toast.error('Invalid Member ID or password.')
       } else {
-        const isRoleAdmin = data.memberId.toLowerCase().includes('admin')
-        navigate(isRoleAdmin ? '/admin' : '/dashboard', { replace: true })
+        toast.error('An error occurred during login. Please try again.')
       }
-    } catch (error) {
-      toast.error('Invalid Member ID or password.')
     }
   }
 

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/FormControls'
 import { useAuthStore } from '@/store/auth.store'
 import { toast } from '@/components/ui/Toast'
 import { ArrowLeft } from 'lucide-react'
+import { authApi } from '@/api/auth'
 
 // Schemas for the two steps
 const mobileSchema = z.object({
@@ -20,13 +21,24 @@ const otpSchema = z.object({
 })
 type OtpForm = z.infer<typeof otpSchema>
 
-
 export function OTPLogin() {
-  const [step, setStep] = useState<'mobile' | 'otp'>('mobile')
-  const [sentMobile, setSentMobile] = useState('')
   const navigate = useNavigate()
   const location = useLocation()
-  const { setUser } = useAuthStore()
+  const { setToken, setUser } = useAuthStore()
+  
+  const tempToken = location.state?.tempToken
+
+  // Start directly on OTP step if we came from password login with a temp token
+  const [step, setStep] = useState<'mobile' | 'otp'>(tempToken ? 'otp' : 'mobile')
+  const [sentMobile, setSentMobile] = useState('')
+
+  useEffect(() => {
+    // If there's no temp token and we are on the OTP step, we shouldn't be here
+    if (step === 'otp' && !tempToken) {
+      toast.error('Please login with your credentials first.')
+      navigate('/login', { replace: true })
+    }
+  }, [step, tempToken, navigate])
 
   // Form 1: Mobile Number
   const mobileForm = useForm<MobileForm>({ resolver: zodResolver(mobileSchema) })
@@ -35,35 +47,38 @@ export function OTPLogin() {
   const otpForm = useForm<OtpForm>({ resolver: zodResolver(otpSchema) })
 
   const onMobileSubmit = async (data: MobileForm) => {
-    try {
-      // Mock API call to send OTP
-      await new Promise(r => setTimeout(r, 1000))
-      setSentMobile(data.mobile)
-      setStep('otp')
-      toast.success('OTP sent to your registered mobile')
-    } catch {
-      toast.error('Mobile number not found in our records')
-    }
+    // The backend does not currently support a passwordless "send OTP to mobile" endpoint for login.
+    // So this mockup branch will redirect to the password login.
+    toast.info('Please use your Member ID and Password to login.')
+    navigate('/login')
   }
 
-  const onOtpSubmit = async (_data: OtpForm) => {
+  const onOtpSubmit = async (data: OtpForm) => {
     try {
-      // Mock API call to verify OTP
-      await new Promise(r => setTimeout(r, 1000))
+      if (!tempToken) throw new Error('Missing token')
+
+      const { accessToken } = await authApi.verifyOtp(tempToken, data.otp)
+      
+      // Save token to store (which persists and injects it into client)
+      setToken(accessToken)
+      
+      // Now fetch the real user profile
+      const userProfile = await authApi.getMe()
       
       setUser({
-        id: '1',
-        memberId: 'SC-00847',
-        name: 'Ramesh Patel',
-        mobile: sentMobile,
-        role: 'member',
+        id: userProfile.id,
+        memberId: userProfile.memberId || userProfile.email,
+        name: userProfile.name || userProfile.fullName,
+        mobile: userProfile.mobile || '',
+        email: userProfile.email,
+        role: userProfile.role || (userProfile.email ? 'admin' : 'member'),
       })
       
       toast.success('Logged in successfully')
       
-      const from = location.state?.from?.pathname || '/dashboard'
+      const from = location.state?.from || (userProfile.email ? '/admin' : '/dashboard')
       navigate(from, { replace: true })
-    } catch {
+    } catch (error) {
       toast.error('Invalid or expired OTP')
     }
   }
