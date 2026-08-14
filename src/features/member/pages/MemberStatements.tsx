@@ -5,21 +5,40 @@ import { Badge } from '@/components/ui/Badge'
 import { Select } from '@/components/ui/FormControls'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { Download, Printer } from 'lucide-react'
-
-// Mock Data
-const statements = [
-  { id: 'S-2025-02', period: 'Feb 2025', type: 'Savings Account', date: '01 Mar 2025', published: true },
-  { id: 'S-2025-01', period: 'Jan 2025', type: 'Savings Account', date: '01 Feb 2025', published: true },
-  { id: 'L-2025-02', period: 'Feb 2025', type: 'Personal Loan L-24-089', date: '01 Mar 2025', published: true },
-  { id: 'L-2025-01', period: 'Jan 2025', type: 'Personal Loan L-24-089', date: '01 Feb 2025', published: true },
-  { id: 'L-2024-12', period: 'Dec 2024', type: 'Personal Loan L-24-089', date: '01 Jan 2025', published: true },
-]
+import { useQuery, useMutation } from '@tanstack/react-query'
+import apiClient from '@/api/client'
+import { format } from 'date-fns'
+import { toast } from '@/components/ui/Toast'
 
 export function MemberStatements() {
   const [filterType, setFilterType] = useState('all')
 
-  const filteredStatements = statements.filter(
-    (s) => filterType === 'all' || s.type.includes(filterType)
+  const { data: statements, isLoading } = useQuery({
+    queryKey: ['memberStatements'],
+    queryFn: () => apiClient.get('/statements/me').then(r => r.data)
+  })
+  const downloadMutation = useMutation({
+    mutationFn: async ({ id, periodStart }: { id: string; periodStart: string }) => {
+      const res = await apiClient.get(`/statements/me/${id}/download`, { responseType: 'blob' })
+      const url = window.URL.createObjectURL(new Blob([res.data]))
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `statement_${new Date(periodStart).toISOString().slice(0, 7)}.pdf`
+      document.body.appendChild(a); a.click(); a.remove()
+    }
+  })
+
+  const handleDownload = async (id: string, periodStart: string) => {
+    try {
+      await downloadMutation.mutateAsync({ id, periodStart })
+      toast.success('Statement downloaded successfully')
+    } catch (err) {
+      toast.error('Failed to download statement')
+    }
+  }
+
+  const filteredStatements = (statements || []).filter(
+    (s: any) => filterType === 'all' || s.accountType === filterType
   )
 
   return (
@@ -61,19 +80,23 @@ export function MemberStatements() {
         </CardHeader>
         
         <CardContent className="p-0">
-          {filteredStatements.length > 0 ? (
+          {isLoading ? (
+            <div className="p-8 text-center text-mahogany-muted font-body">Loading statements...</div>
+          ) : filteredStatements.length > 0 ? (
             <div className="divide-y divide-ledger-rule">
-              {filteredStatements.map((stmt) => (
+              {filteredStatements.map((stmt: any) => (
                 <LedgerRow
                   key={stmt.id}
-                  stamped={stmt.published}
-                  title={stmt.type}
-                  subtitle={`Statement for ${stmt.period} • Generated ${stmt.date}`}
+                  stamped={stmt.status === 'PUBLISHED'}
+                  title={`${stmt.accountType === 'SAVINGS' ? 'Savings Account' : 'Loan Account'}`}
+                  subtitle={`Statement for ${format(new Date(stmt.periodStart), 'MMMM yyyy')} • Published ${format(new Date(stmt.publishedAt), 'dd MMM yyyy')}`}
                   className="px-6 py-4"
                   mono={
                     <button 
-                      className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-body font-medium text-warm-gold hover:bg-warm-gold/5 border border-warm-gold/20 hover:border-warm-gold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-warm-gold rounded-sm"
-                      aria-label={`Download statement for ${stmt.period}`}
+                      onClick={() => handleDownload(stmt.id, stmt.periodStart)}
+                      disabled={downloadMutation.isPending}
+                      className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-body font-medium text-warm-gold hover:bg-warm-gold/5 border border-warm-gold/20 hover:border-warm-gold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-warm-gold rounded-sm disabled:opacity-50"
+                      aria-label={`Download statement for ${format(new Date(stmt.periodStart), 'MMMM yyyy')}`}
                     >
                       <Download className="h-4 w-4" />
                       Download PDF

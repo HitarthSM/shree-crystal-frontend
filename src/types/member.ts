@@ -24,6 +24,8 @@ export interface Member {
   status: MemberStatus;
   createdAt: string;
   updatedAt: string;
+  panEncrypted?: string | null;
+  aadhaarEncrypted?: string | null;
 }
 
 export interface PaginatedResponse<T> {
@@ -35,3 +37,24 @@ export interface PaginatedResponse<T> {
     totalPages: number;
   };
 }
+
+export interface CreateMemberPayload {
+  fullName: string;
+  fatherOrHusbandName?: string;
+  dob: string;
+  gender: Gender;
+  addressLine1: string;
+  addressLine2?: string;
+  city: string;
+  state: string;
+  pincode: string;
+  mobile: string;
+  email?: string;
+  aadhaar: string;
+  pan?: string;
+  nomineeName?: string;
+  nomineeRelation?: string;
+  nomineeContact?: string;
+  shareCapital?: string;
+}
+

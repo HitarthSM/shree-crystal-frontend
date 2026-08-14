@@ -26,16 +26,17 @@ export function formatDate(date: string | Date): string {
 
 /** Format relative time */
 export function formatRelative(date: string | Date): string {
-  const d = typeof date === 'string' ? new Date(date) : date
-  const diff = Date.now() - d.getTime()
-  const mins = Math.floor(diff / 60_000)
-  const hrs = Math.floor(diff / 3_600_000)
-  const days = Math.floor(diff / 86_400_000)
-  if (mins < 1) return 'Just now'
-  if (mins < 60) return `${mins}m ago`
-  if (hrs < 24) return `${hrs}h ago`
-  if (days < 7) return `${days}d ago`
-  return formatDate(d)
+  const d = typeof date === 'string' ? new Date(date) : date;
+  const diffInSeconds = Math.floor((d.getTime() - Date.now()) / 1000);
+  
+  const rtf = new Intl.RelativeTimeFormat('en-IN', { numeric: 'auto' });
+
+  if (Math.abs(diffInSeconds) < 60) return rtf.format(Math.round(diffInSeconds), 'second');
+  if (Math.abs(diffInSeconds) < 3600) return rtf.format(Math.round(diffInSeconds / 60), 'minute');
+  if (Math.abs(diffInSeconds) < 86400) return rtf.format(Math.round(diffInSeconds / 3600), 'hour');
+  if (Math.abs(diffInSeconds) < 604800) return rtf.format(Math.round(diffInSeconds / 86400), 'day');
+
+  return formatDate(d);
 }
 
 /** Calculate EMI: P * r * (1+r)^n / ((1+r)^n - 1) */

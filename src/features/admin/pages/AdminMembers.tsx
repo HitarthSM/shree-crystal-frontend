@@ -6,12 +6,16 @@ import { Badge } from '@/components/ui/Badge'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { UserPlus, Upload, Search, Filter } from 'lucide-react'
 import { Link } from 'react-router-dom'
-import { useMembersQuery } from '@/hooks/useMembers'
+import { useQuery } from '@tanstack/react-query'
+import apiClient from '@/api/client'
 
 export function AdminMembers() {
   const [searchTerm, setSearchTerm] = useState('')
 
-  const { data, isLoading, isError } = useMembersQuery({ search: searchTerm })
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ['members', { search: searchTerm }],
+    queryFn: () => apiClient.get('/members', { params: { search: searchTerm } }).then(res => res.data)
+  })
   const filteredMembers = data?.data || []
 
   return (
@@ -80,7 +84,7 @@ export function AdminMembers() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-ledger-rule">
-                {filteredMembers.map((member) => (
+                {filteredMembers.map((member: any) => (
                   <tr key={member.id} className="hover:bg-warm-gold/5 transition-colors group">
                     <td className="p-4 pl-6 font-data text-sm font-medium text-dark-mahogany">{member.memberId}</td>
                     <td className="p-4 font-body text-sm text-dark-mahogany">{member.fullName}</td>

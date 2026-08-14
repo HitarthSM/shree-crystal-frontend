@@ -6,7 +6,6 @@ import { z } from 'zod'
 import { Eye, EyeOff } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/FormControls'
-import { useAuthStore } from '@/store/auth.store'
 import { toast } from '@/components/ui/Toast'
 
 import { authApi } from '@/api/auth'

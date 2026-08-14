@@ -17,6 +17,7 @@ import { MemberDashboard } from './features/member/pages/MemberDashboard'
 import { MemberStatements } from './features/member/pages/MemberStatements'
 import { MemberNotices } from './features/member/pages/MemberNotices'
 import { MemberProfile } from './features/member/pages/MemberProfile'
+import { MemberSupport } from './features/member/pages/MemberSupport'
 
 // Pages - Admin
 import { AdminDashboard } from './features/admin/pages/AdminDashboard'
@@ -27,6 +28,8 @@ import { AdminMemberImport } from './features/admin/pages/AdminMemberImport'
 import { AdminStatements } from './features/admin/pages/AdminStatements'
 import { AdminNotices } from './features/admin/pages/AdminNotices'
 import { AdminActivity } from './features/admin/pages/AdminActivity'
+import { AdminSettings } from './features/admin/pages/AdminSettings'
+import { AdminQueries } from './features/admin/pages/AdminQueries'
 
 // Temporary placeholders until pages are built
 const Placeholder = ({ name }: { name: string }) => (
@@ -61,7 +64,7 @@ const router = createBrowserRouter([
           { path: 'statements', element: <MemberStatements /> },
           { path: 'notices', element: <MemberNotices /> },
           { path: 'profile', element: <MemberProfile /> },
-          { path: 'support', element: <Placeholder name="Support" /> },
+          { path: 'support', element: <MemberSupport /> },
         ],
       },
     ],
@@ -82,8 +85,9 @@ const router = createBrowserRouter([
           { path: 'members/:id', element: <AdminMemberDetail /> },
           { path: 'statements', element: <AdminStatements /> },
           { path: 'notices', element: <AdminNotices /> },
+          { path: 'support', element: <AdminQueries /> },
           { path: 'activity', element: <AdminActivity /> },
-          { path: 'settings', element: <Placeholder name="Settings" /> },
+          { path: 'settings', element: <AdminSettings /> },
           { path: 'export', element: <Placeholder name="Export Data" /> },
           { path: 'backup', element: <Placeholder name="Database Backup" /> },
         ],

@@ -10,29 +10,26 @@ import {
   XCircle,
   AlertCircle
 } from 'lucide-react'
-
-// Mock Data
-const stats = [
-  { label: 'Total Active Members', value: '1,847', trend: '+12 this month' },
-  { label: 'Pending Approvals', value: '8', trend: 'Needs action' },
-  { label: 'Total Loan Disbursed', value: formatINR(42500000), trend: 'FY 24-25' },
-  { label: 'Active Deposits', value: formatINR(85000000), trend: 'FY 24-25' },
-]
-
-const pendingApprovals = [
-  { id: 'SC-00851', name: 'Kiran Desai', type: 'New Membership', date: '2 hours ago' },
-  { id: 'L-25-012', name: 'Ramesh Patel', type: 'Loan Disbursement', date: '5 hours ago' },
-  { id: 'SC-00420', name: 'Sita Shah', type: 'KYC Update', date: '1 day ago' },
-]
-
-const recentActivity = [
-  { id: 1, action: 'Bulk Statement Upload', admin: 'Super Admin', date: '10 mins ago' },
-  { id: 2, action: 'Notice Published (AGM)', admin: 'Operator', date: '2 hours ago' },
-  { id: 3, action: 'Daily Backup Completed', admin: 'System', date: '6 hours ago' },
-  { id: 4, action: 'Member Details Updated', admin: 'Operator', date: '1 day ago' },
-]
-
+import { Link } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
+import apiClient from '@/api/client'
+import { formatDistanceToNow } from 'date-fns'
 export function AdminDashboard() {
+  const { data, isLoading } = useQuery({
+    queryKey: ['adminDashboard'],
+    queryFn: () => apiClient.get('/dashboard/admin').then(res => res.data)
+  })
+
+  const stats = [
+    { label: 'Total Active Members', value: data?.stats.totalActiveMembers || 0, trend: 'Current' },
+    { label: 'Pending Approvals', value: data?.stats.pendingApprovalsCount || 0, trend: 'Needs action' },
+    { label: 'Total Loan Disbursed', value: formatINR(data?.stats.totalLoanDisbursed || 0), trend: 'FY 24-25' },
+    { label: 'Active Deposits', value: formatINR(data?.stats.activeDeposits || 0), trend: 'FY 24-25' },
+  ]
+
+  const pendingApprovals = data?.pendingApprovals || []
+  const recentActivity = data?.recentActivity || []
+
   return (
     <div className="space-y-8 animate-fade-slide-up">
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-4">
@@ -51,15 +48,21 @@ export function AdminDashboard() {
 
       {/* Quick Actions Row */}
       <div className="flex flex-wrap gap-4">
-        <Button variant="primary" leftIcon={<Users className="h-4 w-4" />}>
-          Add Member
-        </Button>
-        <Button variant="secondary" leftIcon={<FileText className="h-4 w-4" />}>
-          Upload Statements
-        </Button>
-        <Button variant="secondary" leftIcon={<AlertCircle className="h-4 w-4" />}>
-          Post Notice
-        </Button>
+        <Link to="/admin/members/add">
+          <Button variant="primary" leftIcon={<Users className="h-4 w-4" />}>
+            Add Member
+          </Button>
+        </Link>
+        <Link to="/admin/statements">
+          <Button variant="secondary" leftIcon={<FileText className="h-4 w-4" />}>
+            Upload Statements
+          </Button>
+        </Link>
+        <Link to="/admin/notices">
+          <Button variant="secondary" leftIcon={<AlertCircle className="h-4 w-4" />}>
+            Post Notice
+          </Button>
+        </Link>
       </div>
 
       {/* Stats Grid */}
@@ -86,31 +89,34 @@ export function AdminDashboard() {
           </CardHeader>
           <CardContent className="p-0">
             <div className="divide-y divide-ledger-rule">
-              {pendingApprovals.map((item) => (
-                <LedgerRow
-                  key={item.id}
-                  title={item.name}
-                  subtitle={item.type}
-                  date={item.date}
-                  className="px-6 py-4"
-                  mono={
-                    <div className="flex gap-2 mt-1">
-                      <button className="p-1 text-verdant-green hover:bg-verdant-green/10 rounded-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-verdant-green">
-                        <CheckCircle2 className="h-5 w-5" />
-                      </button>
-                      <button className="p-1 text-deep-crimson hover:bg-deep-crimson/10 rounded-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-deep-crimson">
-                        <XCircle className="h-5 w-5" />
-                      </button>
-                    </div>
-                  }
-                />
-              ))}
+              {isLoading ? (
+                <div className="p-6 text-center text-mahogany-muted text-sm font-body">Loading...</div>
+              ) : pendingApprovals.length === 0 ? (
+                <div className="p-6 text-center text-mahogany-muted text-sm font-body">
+                  All caught up. No pending approvals.
+                </div>
+              ) : (
+                pendingApprovals.map((item: any) => (
+                  <LedgerRow
+                    key={item.id}
+                    title={item.entityType}
+                    subtitle={`Status: ${item.status}`}
+                    date={formatDistanceToNow(new Date(item.createdAt), { addSuffix: true })}
+                    className="px-6 py-4"
+                    mono={
+                      <div className="flex gap-2 mt-1">
+                        <button className="p-1 text-verdant-green hover:bg-verdant-green/10 rounded-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-verdant-green">
+                          <CheckCircle2 className="h-5 w-5" />
+                        </button>
+                        <button className="p-1 text-deep-crimson hover:bg-deep-crimson/10 rounded-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-deep-crimson">
+                          <XCircle className="h-5 w-5" />
+                        </button>
+                      </div>
+                    }
+                  />
+                ))
+              )}
             </div>
-            {pendingApprovals.length === 0 && (
-              <div className="p-6 text-center text-mahogany-muted text-sm font-body">
-                All caught up. No pending approvals.
-              </div>
-            )}
           </CardContent>
         </Card>
 
@@ -124,16 +130,24 @@ export function AdminDashboard() {
           </CardHeader>
           <CardContent className="p-0">
             <div className="divide-y divide-ledger-rule">
-              {recentActivity.map((log) => (
-                <LedgerRow
-                  key={log.id}
-                  stamped
-                  title={log.action}
-                  subtitle={`By: ${log.admin}`}
-                  date={log.date}
-                  className="px-6 py-3"
-                />
-              ))}
+              {isLoading ? (
+                <div className="p-6 text-center text-mahogany-muted text-sm font-body">Loading...</div>
+              ) : recentActivity.length === 0 ? (
+                <div className="p-6 text-center text-mahogany-muted text-sm font-body">
+                  No recent activity found.
+                </div>
+              ) : (
+                recentActivity.map((log: any) => (
+                  <LedgerRow
+                    key={log.id}
+                    stamped
+                    title={log.action}
+                    subtitle={`By: ${log.actorType}`}
+                    date={formatDistanceToNow(new Date(log.createdAt), { addSuffix: true })}
+                    className="px-6 py-3"
+                  />
+                ))
+              )}
             </div>
           </CardContent>
         </Card>

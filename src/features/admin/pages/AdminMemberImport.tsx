@@ -1,30 +1,57 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { ArrowLeft, Upload, CheckCircle2, AlertTriangle, FileSpreadsheet } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import { toast } from '@/components/ui/Toast'
+import { useMutation } from '@tanstack/react-query'
+import apiClient from '@/api/client'
 
 export function AdminMemberImport() {
   const navigate = useNavigate()
   const [step, setStep] = useState<1 | 2>(1)
-  const [isUploading, setIsUploading] = useState(false)
-  const [isConfirming, setIsConfirming] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [batchState, setBatchState] = useState<any>(null)
+  
+  const importMembers = useMutation({
+    mutationFn: (file: File) => {
+      const formData = new FormData()
+      formData.append('file', file)
+      return apiClient.post('/members/import', formData, { headers: { 'Content-Type': 'multipart/form-data' } }).then(res => res.data)
+    }
+  })
+  
+  const confirmImport = useMutation({
+    mutationFn: (batchId: string) => apiClient.post(`/members/import/${batchId}/confirm`).then(res => res.data)
+  })
 
-  const handleUpload = async () => {
-    setIsUploading(true)
-    // Mock processing delay
-    await new Promise(r => setTimeout(r, 1500))
-    setIsUploading(false)
-    setStep(2)
+  const triggerFileInput = () => {
+    fileInputRef.current?.click()
+  }
+
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    try {
+      const response = await importMembers.mutateAsync(file)
+      setBatchState(response)
+      setStep(2)
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Failed to upload file.')
+    }
   }
 
   const handleConfirm = async () => {
-    setIsConfirming(true)
-    await new Promise(r => setTimeout(r, 1000))
-    toast.success('42 members imported successfully.')
-    navigate('/admin/members')
+    if (!batchState?.id) return
+    try {
+      await confirmImport.mutateAsync(batchState.id)
+      toast.success(`${batchState.validRows} members imported successfully.`)
+      navigate('/admin/members')
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Failed to confirm import.')
+    }
   }
 
   return (
@@ -74,10 +101,17 @@ export function AdminMemberImport() {
               <Button variant="secondary" leftIcon={<DownloadIcon className="h-4 w-4" />}>
                 Download Template
               </Button>
+              <input
+                type="file"
+                accept=".csv,.xlsx,.xls"
+                className="hidden"
+                ref={fileInputRef}
+                onChange={handleUpload}
+              />
               <Button 
                 variant="primary" 
-                onClick={handleUpload}
-                isLoading={isUploading}
+                onClick={triggerFileInput}
+                isLoading={importMembers.isPending}
                 leftIcon={<Upload className="h-4 w-4" />}
               >
                 Upload File
@@ -95,11 +129,11 @@ export function AdminMemberImport() {
               <div>
                 <h3 className="font-display text-lg text-dark-mahogany mb-1">File Validated Successfully</h3>
                 <p className="text-sm font-body text-mahogany-muted mb-4">
-                  We found 42 valid records and 0 errors in your uploaded file. Please confirm to proceed with the import.
+                  We found {batchState?.validRows || 0} valid records and {batchState?.invalidRows || 0} errors in your uploaded file. Please confirm to proceed with the import.
                 </p>
                 <div className="flex gap-4">
-                  <Badge variant="published">42 Valid rows</Badge>
-                  <Badge variant="urgent" className="opacity-50">0 Errors</Badge>
+                  <Badge variant="published">{batchState?.validRows || 0} Valid rows</Badge>
+                  <Badge variant="urgent" className={batchState?.invalidRows === 0 ? "opacity-50" : ""}>{batchState?.invalidRows || 0} Errors</Badge>
                 </div>
               </div>
             </div>
@@ -118,15 +152,16 @@ export function AdminMemberImport() {
           </Card>
 
           <div className="flex justify-end gap-4 pt-4">
-            <Button variant="ghost" onClick={() => setStep(1)} disabled={isConfirming}>
+            <Button variant="ghost" onClick={() => setStep(1)} disabled={confirmImport.isPending}>
               Cancel Upload
             </Button>
             <Button 
               variant="primary" 
               onClick={handleConfirm}
-              isLoading={isConfirming}
+              isLoading={confirmImport.isPending}
+              disabled={batchState?.validRows === 0}
             >
-              Confirm Import 42 Members
+              Confirm Import {batchState?.validRows || 0} Members
             </Button>
           </div>
         </div>

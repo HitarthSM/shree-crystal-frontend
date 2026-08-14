@@ -7,41 +7,56 @@ import * as z from 'zod'
 import { ArrowLeft, Save } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import { toast } from '@/components/ui/Toast'
+import { useMutation } from '@tanstack/react-query'
+import apiClient from '@/api/client'
 
 const memberSchema = z.object({
-  name: z.string().min(3, "Name must be at least 3 characters"),
-  mobile: z.string().regex(/^[6-9]\d{9}$/, "Invalid 10-digit mobile number"),
+  fullName: z.string().min(3, "Name must be at least 3 characters"),
+  fatherOrHusbandName: z.string().optional(),
+  gender: z.enum(['MALE', 'FEMALE', 'OTHER']),
+  mobile: z.string().regex(/^[0-9]{10}$/, "Invalid 10-digit mobile number"),
   email: z.string().email("Invalid email address").optional().or(z.literal('')),
   dob: z.string().refine((val) => {
     const age = (new Date().getTime() - new Date(val).getTime()) / (365.25 * 24 * 60 * 60 * 1000)
     return age >= 18
   }, "Member must be at least 18 years old"),
-  address: z.string().min(10, "Address is required"),
-  pan: z.string().regex(/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/, "Invalid PAN format"),
+  addressLine1: z.string().min(5, "Address is required"),
+  addressLine2: z.string().optional(),
+  city: z.string().min(2, "City is required"),
+  state: z.string().min(2, "State is required"),
+  pincode: z.string().regex(/^[0-9]{6}$/, "Invalid pincode"),
+  pan: z.string().regex(/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/i, "Invalid PAN format").optional().or(z.literal('')),
   aadhaar: z.string().regex(/^\d{12}$/, "Invalid 12-digit Aadhaar"),
-  shareCapital: z.string().refine(val => parseInt(val) >= 500, "Minimum share capital is ₹500"),
-  nomineeName: z.string().min(3, "Nominee name is required"),
-  nomineeRelation: z.string().min(1, "Relation is required"),
+  shareCapital: z.string().refine(val => parseInt(val) >= 500, "Minimum share capital is ₹500").optional(),
+  nomineeName: z.string().optional(),
+  nomineeRelation: z.string().optional(),
+  nomineeContact: z.string().optional(),
 })
 
 type MemberForm = z.infer<typeof memberSchema>
 
 export function AdminMemberAdd() {
   const navigate = useNavigate()
+  const createMember = useMutation({
+    mutationFn: (data: any) => apiClient.post('/members', data).then(res => res.data)
+  })
   
-  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<MemberForm>({
+  const { register, handleSubmit, formState: { errors } } = useForm<MemberForm>({
     resolver: zodResolver(memberSchema)
   })
 
   const onSubmit = async (data: MemberForm) => {
     try {
-      // Mock API call
-      await new Promise(r => setTimeout(r, 1000))
-      console.log('Submitted:', data)
+      await createMember.mutateAsync({
+        ...data,
+        email: data.email || undefined,
+        pan: data.pan || undefined,
+        shareCapital: data.shareCapital || undefined,
+      } as any)
       toast.success('The new member record has been saved successfully.')
       navigate('/admin/members')
-    } catch (err) {
-      toast.error('Failed to create member record.')
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Failed to create member record.')
     }
   }
 
@@ -74,14 +89,31 @@ export function AdminMemberAdd() {
             <Input 
               label="Full Name" 
               placeholder="e.g. Ramesh Patel" 
-              {...register('name')} 
-              error={errors.name?.message}
+              {...register('fullName')} 
+              error={errors.fullName?.message}
+            />
+            <Input 
+              label="Father/Husband Name" 
+              placeholder="e.g. Suresh Patel" 
+              {...register('fatherOrHusbandName')} 
+              error={errors.fatherOrHusbandName?.message}
             />
             <Input 
               label="Date of Birth" 
               type="date" 
               {...register('dob')} 
               error={errors.dob?.message}
+            />
+            <Select
+              label="Gender"
+              {...register('gender')}
+              error={errors.gender?.message}
+              options={[
+                { value: '', label: 'Select Gender' },
+                { value: 'MALE', label: 'Male' },
+                { value: 'FEMALE', label: 'Female' },
+                { value: 'OTHER', label: 'Other' }
+              ]}
             />
             <Input 
               label="Mobile Number" 
@@ -98,12 +130,38 @@ export function AdminMemberAdd() {
             />
             <div className="md:col-span-2">
               <Input 
-                label="Registered Address" 
-                placeholder="Full residential address" 
-                {...register('address')} 
-                error={errors.address?.message}
+                label="Address Line 1" 
+                placeholder="House No, Building, Street" 
+                {...register('addressLine1')} 
+                error={errors.addressLine1?.message}
               />
             </div>
+            <div className="md:col-span-2">
+              <Input 
+                label="Address Line 2 (Optional)" 
+                placeholder="Area, Landmark" 
+                {...register('addressLine2')} 
+                error={errors.addressLine2?.message}
+              />
+            </div>
+            <Input 
+              label="City" 
+              placeholder="City" 
+              {...register('city')} 
+              error={errors.city?.message}
+            />
+            <Input 
+              label="State" 
+              placeholder="State" 
+              {...register('state')} 
+              error={errors.state?.message}
+            />
+            <Input 
+              label="Pincode" 
+              placeholder="6-digit pincode" 
+              {...register('pincode')} 
+              error={errors.pincode?.message}
+            />
           </CardContent>
         </Card>
 
@@ -140,7 +198,7 @@ export function AdminMemberAdd() {
               {...register('shareCapital')} 
               error={errors.shareCapital?.message}
             />
-            <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-6">
               <Input 
                 label="Nominee Name" 
                 placeholder="Full name of nominee" 
@@ -160,6 +218,12 @@ export function AdminMemberAdd() {
                   { value: 'Other', label: 'Other' },
                 ]}
               />
+              <Input 
+                label="Nominee Contact" 
+                placeholder="Mobile number" 
+                {...register('nomineeContact')} 
+                error={errors.nomineeContact?.message}
+              />
             </div>
           </CardContent>
         </Card>
@@ -171,7 +235,7 @@ export function AdminMemberAdd() {
           <Button 
             type="submit" 
             variant="primary" 
-            isLoading={isSubmitting}
+            isLoading={createMember.isPending}
             leftIcon={<Save className="h-4 w-4" />}
           >
             Save Member Record

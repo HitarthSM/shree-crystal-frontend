@@ -4,23 +4,38 @@ import { LedgerRow } from '@/components/ui/LedgerRow'
 import { Input, Select } from '@/components/ui/FormControls'
 import { Button } from '@/components/ui/Button'
 import { Filter, Download } from 'lucide-react'
-
-// Mock Data
-const logs = [
-  { id: 1, action: 'Bulk Statement Upload', admin: 'Super Admin', ip: '192.168.1.1', date: '10 mins ago', time: '13:45:22' },
-  { id: 2, action: 'Notice Published (AGM)', admin: 'Operator (Kiran)', ip: '192.168.1.5', date: '2 hours ago', time: '11:30:00' },
-  { id: 3, action: 'Daily Backup Completed', admin: 'System', ip: 'localhost', date: '6 hours ago', time: '08:00:00' },
-  { id: 4, action: 'Member Details Updated (SC-00847)', admin: 'Operator (Kiran)', ip: '192.168.1.5', date: '1 day ago', time: '14:20:11' },
-  { id: 5, action: 'Login Failed (Invalid OTP)', admin: 'System (User: 9876543210)', ip: '117.20.45.12', date: '1 day ago', time: '10:15:00' },
-  { id: 6, action: 'System Settings Updated', admin: 'Super Admin', ip: '192.168.1.1', date: '2 days ago', time: '16:45:00' },
-]
+import { useQuery, useMutation } from '@tanstack/react-query'
+import apiClient from '@/api/client'
+import { formatDistanceToNow, format } from 'date-fns'
+import { toast } from '@/components/ui/Toast'
 
 export function AdminActivity() {
   const [filterRole, setFilterRole] = useState('all')
+  const [search, setSearch] = useState('')
 
-  const filteredLogs = logs.filter(
-    (l) => filterRole === 'all' || l.admin.toLowerCase().includes(filterRole)
+  const { data: logsData, isLoading } = useQuery({
+    queryKey: ['activity', { actorType: filterRole !== 'all' ? filterRole.toUpperCase() : undefined }],
+    queryFn: () => apiClient.get('/activity', { params: { actorType: filterRole !== 'all' ? filterRole.toUpperCase() : undefined } }).then(res => res.data)
+  })
+  
+  const exportMutation = useMutation({
+    mutationFn: (params: any) => apiClient.get('/activity/export', { params, responseType: 'blob' })
+  })
+
+  const logs = logsData?.data || []
+  
+  const filteredLogs = logs.filter((l: any) => 
+    !search || l.action.toLowerCase().includes(search.toLowerCase())
   )
+
+  const handleExport = async () => {
+    try {
+      await exportMutation.mutateAsync({ actorType: filterRole !== 'all' ? filterRole.toUpperCase() : undefined })
+      toast.success('Activity log exported successfully')
+    } catch (err) {
+      toast.error('Failed to export activity log')
+    }
+  }
 
   return (
     <div className="space-y-8 animate-fade-slide-up">
@@ -34,7 +49,12 @@ export function AdminActivity() {
           </p>
         </div>
         
-        <Button variant="secondary" leftIcon={<Download className="h-4 w-4" />}>
+        <Button 
+          variant="secondary" 
+          leftIcon={<Download className="h-4 w-4" />}
+          onClick={handleExport}
+          isLoading={exportMutation.isPending}
+        >
           Export Audit Trail
         </Button>
       </header>
@@ -61,8 +81,10 @@ export function AdminActivity() {
               <Input
                 label=""
                 aria-label="Search logs"
-                placeholder="Search action or ID..."
+                placeholder="Search action..."
                 type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
               />
             </div>
             <Button variant="ghost" size="icon" className="hidden md:flex">
@@ -73,16 +95,22 @@ export function AdminActivity() {
         
         <CardContent className="p-0">
           <div className="divide-y divide-ledger-rule">
-            {filteredLogs.map((log) => (
-              <LedgerRow
-                key={log.id}
-                title={log.action}
-                subtitle={`Actor: ${log.admin} • IP: ${log.ip}`}
-                date={log.date}
-                className="px-6 py-3 hover:bg-transparent cursor-default"
-                mono={<span className="text-xs text-mahogany-muted/70">{log.time}</span>}
-              />
-            ))}
+            {isLoading ? (
+              <div className="p-8 text-center text-mahogany-muted font-body">Loading audit trail...</div>
+            ) : filteredLogs.length === 0 ? (
+              <div className="p-8 text-center text-mahogany-muted font-body">No activity records found.</div>
+            ) : (
+              filteredLogs.map((log: any) => (
+                <LedgerRow
+                  key={log.id}
+                  title={log.action}
+                  subtitle={`Actor: ${log.actorType} • IP: ${log.ipAddress || 'N/A'}`}
+                  date={formatDistanceToNow(new Date(log.createdAt), { addSuffix: true })}
+                  className="px-6 py-3 hover:bg-transparent cursor-default"
+                  mono={<span className="text-xs text-mahogany-muted/70">{format(new Date(log.createdAt), 'HH:mm:ss')}</span>}
+                />
+              ))
+            )}
           </div>
         </CardContent>
       </Card>

@@ -3,22 +3,11 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { LedgerRow } from '@/components/ui/LedgerRow'
-import { formatINR, maskAadhaar, maskPAN } from '@/lib/utils'
+import { formatINR } from '@/lib/utils'
 import { ArrowLeft, Edit3, ShieldAlert, FileText, Landmark } from 'lucide-react'
 
-// Mock Data
-const member = { 
-  id: 'SC-00847', 
-  name: 'Ramesh Patel', 
-  mobile: '9876543210', 
-  email: 'ramesh.p@example.com',
-  status: 'active', 
-  joined: '15 Jan 2018',
-  kyc: { pan: 'ABCDE1234F', aadhaar: '123456789012', status: 'verified' },
-  address: '14, Shreeji Society, Navrangpura, Ahmedabad 380009',
-  shareCapital: 5000,
-  nominee: 'Suresh Patel (Son)'
-}
+import { useQuery } from '@tanstack/react-query'
+import apiClient from '@/api/client'
 
 const activeLoans = [
   { id: 'L-24-089', type: 'Personal Loan', principal: 500000, outstanding: 45000, emi: 5200, nextDue: '05 Apr 2025' }
@@ -27,7 +16,14 @@ const activeLoans = [
 export function AdminMemberDetail() {
   const { id } = useParams()
   
-  // In reality, you'd fetch the member by ID here. We'll use mock data.
+  const { data: member, isLoading, isError } = useQuery({
+    queryKey: ['member', id],
+    queryFn: () => apiClient.get(`/members/${id}`).then(res => res.data),
+    enabled: !!id,
+  })
+
+  if (isLoading) return <div className="p-8 text-center font-body text-mahogany-muted">Loading member details...</div>
+  if (isError || !member) return <div className="p-8 text-center font-body text-urgent">Failed to load member.</div>
 
   return (
     <div className="space-y-8 animate-fade-slide-up">
@@ -42,15 +38,15 @@ export function AdminMemberDetail() {
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
           <div className="flex items-center gap-4">
             <div className="h-16 w-16 rounded-full bg-deep-saffron flex items-center justify-center text-ivory font-display font-bold text-2xl shadow-card">
-              {member.name.charAt(0)}
+              {member.fullName.charAt(0)}
             </div>
             <div>
               <h1 className="text-display-md font-display text-dark-mahogany mb-1 flex items-center gap-3">
-                {member.name}
-                <Badge variant={member.status as any}>{member.status.toUpperCase()}</Badge>
+                {member.fullName}
+                <Badge variant={member.status.toLowerCase() as any}>{member.status}</Badge>
               </h1>
               <p className="font-data text-mahogany-muted">
-                {id} • Joined {member.joined}
+                {member.memberId} • Joined {new Date(member.createdAt).toLocaleDateString()}
               </p>
             </div>
           </div>
@@ -74,18 +70,23 @@ export function AdminMemberDetail() {
             <CardHeader className="mb-4">
               <CardTitle className="text-lg">Contact & KYC</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6">
               <div>
-                <p className="text-xs font-data text-mahogany-muted uppercase tracking-wider mb-1">Mobile</p>
-                <p className="font-body text-sm font-medium text-dark-mahogany">{member.mobile}</p>
+                <p className="text-xs font-body text-mahogany-muted uppercase tracking-wider mb-1">Mobile</p>
+                <p className="font-body font-medium text-dark-mahogany">{member.mobile}</p>
               </div>
               <div>
-                <p className="text-xs font-data text-mahogany-muted uppercase tracking-wider mb-1">Email</p>
-                <p className="font-body text-sm font-medium text-dark-mahogany">{member.email}</p>
+                <p className="text-xs font-body text-mahogany-muted uppercase tracking-wider mb-1">Email</p>
+                <p className="font-body font-medium text-dark-mahogany">{member.email || '—'}</p>
               </div>
-              <div>
-                <p className="text-xs font-data text-mahogany-muted uppercase tracking-wider mb-1">Address</p>
-                <p className="font-body text-sm text-dark-mahogany">{member.address}</p>
+              <div className="md:col-span-2">
+                <p className="text-xs font-body text-mahogany-muted uppercase tracking-wider mb-1">Registered Address</p>
+                <p className="font-body font-medium text-dark-mahogany">
+                  {member.addressLine1}
+                  {member.addressLine2 ? `, ${member.addressLine2}` : ''}
+                  <br />
+                  {member.city}, {member.state} - {member.pincode}
+                </p>
               </div>
               <div className="pt-4 border-t border-ledger-rule flex justify-between items-end">
                 <div>
@@ -95,8 +96,8 @@ export function AdminMemberDetail() {
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="font-data text-sm text-dark-mahogany">{maskPAN(member.kyc.pan)}</p>
-                  <p className="font-data text-sm text-dark-mahogany">{maskAadhaar(member.kyc.aadhaar)}</p>
+                  <p className="font-data text-sm text-dark-mahogany">{member.panEncrypted || 'N/A'}</p>
+                  <p className="font-data text-sm text-dark-mahogany">{member.aadhaarEncrypted}</p>
                 </div>
               </div>
             </CardContent>
@@ -109,11 +110,11 @@ export function AdminMemberDetail() {
             <CardContent className="space-y-4">
               <div className="flex justify-between items-center">
                 <span className="text-sm font-body text-mahogany-muted">Share Capital</span>
-                <span className="font-data text-sm text-dark-mahogany">{formatINR(member.shareCapital)}</span>
+                <span className="font-data text-sm text-dark-mahogany">{formatINR(Number(member.shareCapital))}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm font-body text-mahogany-muted">Nominee</span>
-                <span className="font-body text-sm text-dark-mahogany">{member.nominee}</span>
+                <span className="font-body text-sm text-dark-mahogany">{member.nomineeName} ({member.nomineeRelation})</span>
               </div>
             </CardContent>
           </Card>

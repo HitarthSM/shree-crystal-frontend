@@ -10,6 +10,7 @@ import {
   Database,
   LogOut,
   Search,
+  MessageSquare,
 } from 'lucide-react'
 import { useAuthStore } from '@/store/auth.store'
 import { Badge } from '@/components/ui/Badge'
@@ -28,6 +29,7 @@ export function AdminLayout() {
     { to: '/admin/members', icon: Users, label: 'Members' },
     { to: '/admin/statements', icon: FileText, label: 'Statements' },
     { to: '/admin/notices', icon: Bell, label: 'Notices' },
+    { to: '/admin/support', icon: MessageSquare, label: 'Support Queries' },
     { to: '/admin/activity', icon: Activity, label: 'Activity Log' },
     { to: '/admin/settings', icon: Settings, label: 'Settings' },
   ]

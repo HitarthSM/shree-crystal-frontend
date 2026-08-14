@@ -30,7 +30,7 @@ export function OTPLogin() {
 
   // Start directly on OTP step if we came from password login with a temp token
   const [step, setStep] = useState<'mobile' | 'otp'>(tempToken ? 'otp' : 'mobile')
-  const [sentMobile, setSentMobile] = useState('')
+  const [sentMobile] = useState('')
 
   useEffect(() => {
     // If there's no temp token and we are on the OTP step, we shouldn't be here
@@ -46,10 +46,9 @@ export function OTPLogin() {
   // Form 2: OTP Entry
   const otpForm = useForm<OtpForm>({ resolver: zodResolver(otpSchema) })
 
-  const onMobileSubmit = async (data: MobileForm) => {
-    // The backend does not currently support a passwordless "send OTP to mobile" endpoint for login.
-    // So this mockup branch will redirect to the password login.
-    toast.info('Please use your Member ID and Password to login.')
+  const onMobileSubmit = async () => {
+    // This is currently a mock UI, in the future this would trigger the OTP request
+    toast.success('Please use your Member ID and Password to login.')
     navigate('/login')
   }
 
