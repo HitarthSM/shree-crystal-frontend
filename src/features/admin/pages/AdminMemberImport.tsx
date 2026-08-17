@@ -129,18 +129,12 @@ export function AdminMemberImport() {
               <div>
                 <h3 className="font-display text-lg text-dark-mahogany mb-1">File Validated Successfully</h3>
                 <p className="text-sm font-body text-mahogany-muted mb-4">
-                  We found {batchState?.validRows || 0} valid records and {batchState?.invalidRows || 0} errors in your uploaded file. Please confirm to proceed with the import.
+                  We found {batchState?.validRowCount || 0} valid records and {batchState?.invalidRowCount || 0} errors in your uploaded file. Please confirm to proceed with the import.
                 </p>
                 <div className="flex gap-4">
-                  <Badge variant="published">{batchState?.validRows || 0} Valid rows</Badge>
-                  <Badge variant="urgent" className={batchState?.invalidRows === 0 ? "opacity-50" : ""}>{batchState?.invalidRows || 0} Errors</Badge>
+                  <Badge variant="published">{batchState?.validRowCount || 0} Valid rows</Badge>
+                  <Badge variant="urgent" className={batchState?.invalidRowCount === 0 ? "opacity-50" : ""}>{batchState?.invalidRowCount || 0} Errors</Badge>
                 </div>
-                
-                {batchState?.debug && (
-                  <pre className="mt-4 p-4 bg-black/5 rounded text-xs overflow-auto max-w-full">
-                    DEBUG INFO: {JSON.stringify(batchState.debug, null, 2)}
-                  </pre>
-                )}
               </div>
             </div>
           </Card>
@@ -165,9 +159,9 @@ export function AdminMemberImport() {
               variant="primary" 
               onClick={handleConfirm}
               isLoading={confirmImport.isPending}
-              disabled={batchState?.validRows === 0}
+              disabled={!batchState?.validRowCount || batchState.validRowCount === 0}
             >
-              Confirm Import {batchState?.validRows || 0} Members
+              Confirm Import {batchState?.validRowCount || 0} Members
             </Button>
           </div>
         </div>
