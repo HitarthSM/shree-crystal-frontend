@@ -135,6 +135,12 @@ export function AdminMemberImport() {
                   <Badge variant="published">{batchState?.validRows || 0} Valid rows</Badge>
                   <Badge variant="urgent" className={batchState?.invalidRows === 0 ? "opacity-50" : ""}>{batchState?.invalidRows || 0} Errors</Badge>
                 </div>
+                
+                {batchState?.debug && (
+                  <pre className="mt-4 p-4 bg-black/5 rounded text-xs overflow-auto max-w-full">
+                    DEBUG INFO: {JSON.stringify(batchState.debug, null, 2)}
+                  </pre>
+                )}
               </div>
             </div>
           </Card>
