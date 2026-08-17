@@ -151,14 +151,6 @@ export function LoginPage() {
             >
               Forgot Password?
             </Link>
-            {/* OTP LOGIN DISABLED TEMPORARILY 
-            <Link
-              to="/login/otp"
-              className="text-sm font-body text-mahogany-muted hover:text-dark-mahogany focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-warm-gold rounded-sm transition-colors"
-            >
-              Login with OTP instead
-            </Link>
-            */}
           </div>
         </div>
       </div>
