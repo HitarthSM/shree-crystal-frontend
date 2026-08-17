@@ -44,10 +44,10 @@ export function AdminMemberImport() {
   }
 
   const handleConfirm = async () => {
-    if (!batchState?.id) return
+    if (!batchState?.batchId) return
     try {
-      await confirmImport.mutateAsync(batchState.id)
-      toast.success(`${batchState.validRows} members imported successfully.`)
+      await confirmImport.mutateAsync(batchState.batchId)
+      toast.success(`${batchState.validRowCount} members imported successfully.`)
       navigate('/admin/members')
     } catch (err: any) {
       toast.error(err.response?.data?.message || 'Failed to confirm import.')
