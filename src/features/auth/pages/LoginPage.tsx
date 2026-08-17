@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/FormControls'
 import { toast } from '@/components/ui/Toast'
 
 import { authApi } from '@/api/auth'
+import { useAuthStore } from '@/store/auth.store'
 
 const loginSchema = z.object({
   memberId: z.string().min(1, 'Member ID is required'),
@@ -30,20 +31,32 @@ export function LoginPage() {
     resolver: zodResolver(loginSchema),
   })
 
+  const { setToken, setUser } = useAuthStore()
+
   const onSubmit = async (data: LoginForm) => {
     try {
       const response = await authApi.login(data.memberId, data.password)
       
-      toast.success('Credentials verified. Sending OTP...')
+      // OTP Bypassed: We receive accessToken directly
+      setToken(response.accessToken)
       
-      // Redirect to OTP page passing the tempToken
-      navigate('/login/otp', { 
-        replace: true,
-        state: { 
-          tempToken: response.tempToken,
-          from: location.state?.from 
-        } 
+      // Fetch user profile immediately
+      const userProfile = await authApi.getMe()
+      
+      setUser({
+        id: userProfile.id,
+        memberId: userProfile.memberId || userProfile.email,
+        name: userProfile.name || userProfile.fullName,
+        mobile: userProfile.mobile || '',
+        email: userProfile.email,
+        role: (userProfile.role || (userProfile.email ? 'admin' : 'member')).toLowerCase(),
       })
+      
+      toast.success('Logged in successfully!')
+      
+      const from = location.state?.from || (userProfile.email ? '/admin' : '/dashboard')
+      navigate(from, { replace: true })
+      
     } catch (error: any) {
       if (error.response?.status === 401 || error.response?.status === 400) {
         toast.error('Invalid Member ID or password.')
@@ -138,12 +151,14 @@ export function LoginPage() {
             >
               Forgot Password?
             </Link>
+            {/* OTP LOGIN DISABLED TEMPORARILY 
             <Link
               to="/login/otp"
               className="text-sm font-body text-mahogany-muted hover:text-dark-mahogany focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-warm-gold rounded-sm transition-colors"
             >
               Login with OTP instead
             </Link>
+            */}
           </div>
         </div>
       </div>
