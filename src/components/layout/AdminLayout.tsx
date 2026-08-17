@@ -28,8 +28,9 @@ export function AdminLayout() {
     { to: '/admin', icon: LayoutDashboard, label: 'Dashboard', end: true },
     { to: '/admin/members', icon: Users, label: 'Members' },
     { to: '/admin/statements', icon: FileText, label: 'Statements' },
-    { to: '/admin/notices', icon: Bell, label: 'Notices' },
-    { to: '/admin/support', icon: MessageSquare, label: 'Support Queries' },
+    { to: '/admin/notices', icon: Bell, label: 'Notices & Circulars' },
+    { to: '/admin/website-cms', icon: LayoutDashboard, label: 'Website CMS' },
+    { to: '/admin/queries', icon: MessageSquare, label: 'Support Queries' },
     { to: '/admin/activity', icon: Activity, label: 'Activity Log' },
     { to: '/admin/settings', icon: Settings, label: 'Settings' },
   ]

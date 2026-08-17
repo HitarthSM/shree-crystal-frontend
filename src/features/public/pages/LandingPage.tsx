@@ -4,6 +4,8 @@ import { LedgerRow } from '@/components/ui/LedgerRow'
 import { Badge } from '@/components/ui/Badge'
 import { Input } from '@/components/ui/FormControls'
 import { useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import apiClient from '@/api/client'
 import { calculateEMI, formatINR } from '@/lib/utils'
 import { Calculator } from 'lucide-react'
 
@@ -11,6 +13,13 @@ export function LandingPage() {
   const [principal, setPrincipal] = useState('500000')
   const [months, setMonths] = useState('60')
   const [rate, setRate] = useState('9.5')
+
+  const { data: aboutData } = useQuery({
+    queryKey: ['public.content.about_us'],
+    queryFn: () => apiClient.get('/public/content/public.content.about_us').then(res => res.data),
+  })
+
+  const aboutText = aboutData?.text || 'Shree Crystal Co-op has been the financial backbone of our local community for over three decades, offering secure savings and accessible credit with unparalleled transparency.'
 
   const emi = calculateEMI(Number(principal), Number(rate), Number(months))
 
@@ -74,8 +83,8 @@ export function LandingPage() {
                 <p><span className="text-dark-mahogany font-medium">Members:</span> 1,847 Active</p>
                 <p><span className="text-dark-mahogany font-medium">Auditor:</span> V.K. Shah & Co.</p>
               </div>
-              <div className="text-body font-body text-dark-mahogany">
-                Shree Crystal Co-op has been the financial backbone of our local community for over three decades, offering secure savings and accessible credit with unparalleled transparency.
+              <div className="text-body font-body text-dark-mahogany whitespace-pre-wrap">
+                {aboutText}
               </div>
             </div>
           </div>

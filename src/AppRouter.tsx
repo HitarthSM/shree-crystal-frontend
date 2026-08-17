@@ -8,11 +8,13 @@ import { RequireAuth } from './components/layout/RequireAuth'
 
 // Pages - Public & Auth
 import { LandingPage } from './features/public/pages/LandingPage'
-import { AboutUs } from './features/public/pages/AboutUs'
+
 import { PublicNotices } from './features/public/pages/PublicNotices'
 import { LoginPage } from './features/auth/pages/LoginPage'
 import { OTPLogin } from './features/auth/pages/OTPLogin'
 import { ForgotPassword } from './features/auth/pages/ForgotPassword'
+import { AboutPage } from './features/public/pages/AboutPage'
+import { ContactPage } from './features/public/pages/ContactPage'
 
 // Pages - Member
 import { MemberDashboard } from './features/member/pages/MemberDashboard'
@@ -31,6 +33,7 @@ import { AdminStatements } from './features/admin/pages/AdminStatements'
 import { AdminNotices } from './features/admin/pages/AdminNotices'
 import { AdminActivity } from './features/admin/pages/AdminActivity'
 import { AdminSettings } from './features/admin/pages/AdminSettings'
+import { AdminWebsiteCMS } from './features/admin/pages/AdminWebsiteCMS'
 import { AdminQueries } from './features/admin/pages/AdminQueries'
 
 // Temporary placeholders until pages are built
@@ -48,9 +51,9 @@ const router = createBrowserRouter([
       { path: 'login', element: <LoginPage /> },
       { path: 'login/otp', element: <OTPLogin /> },
       { path: 'forgot-password', element: <ForgotPassword /> },
-      { path: 'about', element: <AboutUs /> },
+      { path: 'about', element: <AboutPage /> },
       { path: 'notices', element: <PublicNotices /> },
-      { path: 'contact', element: <Placeholder name="Contact" /> },
+      { path: 'contact', element: <ContactPage /> },
     ],
   },
   
@@ -87,6 +90,8 @@ const router = createBrowserRouter([
           { path: 'members/:id', element: <AdminMemberDetail /> },
           { path: 'statements', element: <AdminStatements /> },
           { path: 'notices', element: <AdminNotices /> },
+          { path: 'website-cms', element: <AdminWebsiteCMS /> },
+          { path: 'queries', element: <AdminQueries /> },
           { path: 'support', element: <AdminQueries /> },
           { path: 'activity', element: <AdminActivity /> },
           { path: 'settings', element: <AdminSettings /> },
