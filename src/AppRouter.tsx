@@ -55,7 +55,7 @@ const router = createBrowserRouter([
   // Member Routes
   {
     path: '/dashboard',
-    element: <RequireAuth allowedRoles={['member', 'admin', 'operator']} />,
+    element: <RequireAuth allowedRoles={['member', 'admin', 'super_admin', 'operator', 'viewer']} />,
     children: [
       {
         element: <MemberLayout />,
@@ -73,7 +73,7 @@ const router = createBrowserRouter([
   // Admin Routes
   {
     path: '/admin',
-    element: <RequireAuth allowedRoles={['admin', 'operator']} />,
+    element: <RequireAuth allowedRoles={['admin', 'super_admin', 'operator', 'viewer']} />,
     children: [
       {
         element: <AdminLayout />,

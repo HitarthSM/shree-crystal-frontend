@@ -20,7 +20,8 @@ export function RequireAuth({ allowedRoles }: RequireAuthProps) {
 
   if (allowedRoles && !allowedRoles.includes(user.role)) {
     // Role not authorized, redirect to their default home
-    const homePath = user.role === 'admin' || user.role === 'operator' ? '/admin' : '/dashboard'
+    const isAdminRole = ['admin', 'super_admin', 'operator', 'viewer'].includes(user.role)
+    const homePath = isAdminRole ? '/admin' : '/dashboard'
     return <Navigate to={homePath} replace />
   }
 

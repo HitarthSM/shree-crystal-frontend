@@ -70,7 +70,7 @@ export function OTPLogin() {
         name: userProfile.name || userProfile.fullName,
         mobile: userProfile.mobile || '',
         email: userProfile.email,
-        role: userProfile.role || (userProfile.email ? 'admin' : 'member'),
+        role: (userProfile.role || (userProfile.email ? 'admin' : 'member')).toLowerCase(),
       })
       
       toast.success('Logged in successfully')
