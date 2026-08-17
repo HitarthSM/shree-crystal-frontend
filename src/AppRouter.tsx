@@ -8,6 +8,8 @@ import { RequireAuth } from './components/layout/RequireAuth'
 
 // Pages - Public & Auth
 import { LandingPage } from './features/public/pages/LandingPage'
+import { AboutUs } from './features/public/pages/AboutUs'
+import { PublicNotices } from './features/public/pages/PublicNotices'
 import { LoginPage } from './features/auth/pages/LoginPage'
 import { OTPLogin } from './features/auth/pages/OTPLogin'
 import { ForgotPassword } from './features/auth/pages/ForgotPassword'
@@ -46,8 +48,8 @@ const router = createBrowserRouter([
       { path: 'login', element: <LoginPage /> },
       { path: 'login/otp', element: <OTPLogin /> },
       { path: 'forgot-password', element: <ForgotPassword /> },
-      { path: 'about', element: <Placeholder name="About Us" /> },
-      { path: 'notices', element: <Placeholder name="Public Notices" /> },
+      { path: 'about', element: <AboutUs /> },
+      { path: 'notices', element: <PublicNotices /> },
       { path: 'contact', element: <Placeholder name="Contact" /> },
     ],
   },
