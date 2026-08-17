@@ -22,9 +22,15 @@ apiClient.interceptors.request.use((config) => {
   return config
 })
 
-// Response interceptor — handle 401 globally
+// Response interceptor — handle 401 globally and unwrap data envelope
 apiClient.interceptors.response.use(
-  (res) => res,
+  (res) => {
+    // Unwrap the standard backend envelope { success: true, data: T, message: 'OK' }
+    if (res.data && res.data.success === true && res.data.data !== undefined) {
+      res.data = res.data.data
+    }
+    return res
+  },
   (error) => {
     if (error.response?.status === 401) {
       // Clear local auth state and redirect to login
