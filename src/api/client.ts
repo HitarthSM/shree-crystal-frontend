@@ -32,7 +32,9 @@ apiClient.interceptors.response.use(
     return res
   },
   (error) => {
-    if (error.response?.status === 401) {
+    const originalRequest = error.config
+    
+    if (error.response?.status === 401 && originalRequest.url !== '/auth/login') {
       // Clear local auth state and redirect to login
       useAuthStore.getState().clearUser()
       window.location.href = '/login'
