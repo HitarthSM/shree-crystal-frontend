@@ -121,8 +121,18 @@ export function AdminMemberImport() {
         </Card>
       )}
 
-      {step === 2 && (
-        <div className="space-y-6">
+      {step === 2 && confirmImport.isPending && (
+        <Card padding="xl" className="border-warm-gold/30 bg-warm-gold/5 flex flex-col items-center justify-center text-center animate-pulse py-16">
+           <div className="h-16 w-16 rounded-full border-4 border-warm-gold/20 border-t-warm-gold animate-spin mb-6" />
+           <h3 className="font-display text-xl text-dark-mahogany mb-2">Importing Members...</h3>
+           <p className="text-sm font-body text-mahogany-muted max-w-md mx-auto">
+             Please do not close this window. We are securely processing {batchState?.validRowCount || 0} records into the database. This may take a few moments.
+           </p>
+        </Card>
+      )}
+
+      {step === 2 && !confirmImport.isPending && (
+        <div className="space-y-6 animate-fade-slide-up">
           <Card padding="md" className="border-verdant-green/30 bg-verdant-green/5">
             <div className="flex items-start gap-4">
               <CheckCircle2 className="h-6 w-6 text-verdant-green mt-1" />
