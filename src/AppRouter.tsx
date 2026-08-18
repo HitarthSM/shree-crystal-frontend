@@ -35,6 +35,7 @@ import { AdminActivity } from './features/admin/pages/AdminActivity'
 import { AdminSettings } from './features/admin/pages/AdminSettings'
 import { AdminWebsiteCMS } from './features/admin/pages/AdminWebsiteCMS'
 import { AdminQueries } from './features/admin/pages/AdminQueries'
+import { AdminExport } from './features/admin/pages/AdminExport'
 
 // Temporary placeholders until pages are built
 const Placeholder = ({ name }: { name: string }) => (
@@ -95,7 +96,7 @@ const router = createBrowserRouter([
           { path: 'support', element: <AdminQueries /> },
           { path: 'activity', element: <AdminActivity /> },
           { path: 'settings', element: <AdminSettings /> },
-          { path: 'export', element: <Placeholder name="Export Data" /> },
+          { path: 'export', element: <AdminExport /> },
           { path: 'backup', element: <Placeholder name="Database Backup" /> },
         ],
       },

@@ -17,7 +17,7 @@ export function AdminWebsiteCMS() {
   const [contactAddress, setContactAddress] = useState('')
 
   // Fetch all existing settings
-  const { } = useQuery({
+  useQuery({
     queryKey: ['public.content.about_us'],
     queryFn: () => apiClient.get('/settings/public-content/public.content.about_us').then(res => res.data),
     meta: {
@@ -28,7 +28,7 @@ export function AdminWebsiteCMS() {
     }
   })
 
-  const { } = useQuery({
+  useQuery({
     queryKey: ['public.content.vision_mission'],
     queryFn: () => apiClient.get('/settings/public-content/public.content.vision_mission').then(res => res.data),
     meta: {
@@ -39,7 +39,7 @@ export function AdminWebsiteCMS() {
     }
   })
 
-  const { } = useQuery({
+  useQuery({
     queryKey: ['public.content.contact_info'],
     queryFn: () => apiClient.get('/settings/public-content/public.content.contact_info').then(res => res.data),
     meta: {

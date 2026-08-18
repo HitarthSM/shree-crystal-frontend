@@ -76,14 +76,18 @@ export function ContactPage() {
           </div>
         </div>
 
-        <div className="bg-white p-8 rounded-[8px] shadow-paper border border-ledger-rule h-full min-h-[400px] flex items-center justify-center text-center">
-          <div className="space-y-4">
-            <MapPin className="w-12 h-12 text-warm-gold/40 mx-auto" />
-            <h3 className="font-display text-xl text-dark-mahogany">Map Location</h3>
-            <p className="text-mahogany-muted font-body max-w-sm">
-              Interactive map integration can be added here. Currently displaying static branch details.
-            </p>
-          </div>
+        <div className="bg-white p-2 rounded-[8px] shadow-paper border border-ledger-rule h-full min-h-[400px] overflow-hidden">
+          <iframe 
+            src={`https://maps.google.com/maps?q=${encodeURIComponent(address)}&t=&z=14&ie=UTF8&iwloc=&output=embed`}
+            width="100%" 
+            height="100%" 
+            style={{ border: 0, minHeight: '400px' }} 
+            allowFullScreen 
+            loading="lazy" 
+            referrerPolicy="no-referrer-when-downgrade"
+            className="rounded-[4px]"
+            title="Branch Location Map"
+          />
         </div>
       </section>
     </div>
