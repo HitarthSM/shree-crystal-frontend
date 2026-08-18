@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard,
@@ -18,18 +19,35 @@ import { Badge } from '@/components/ui/Badge'
 export function AdminLayout() {
   const { user, clearUser } = useAuthStore()
   const navigate = useNavigate()
+  // const location = useLocation()
+  
+  const [searchQuery, setSearchQuery] = useState('')
+  const [isNotifOpen, setIsNotifOpen] = useState(false)
+  const [hasNewNotifs, setHasNewNotifs] = useState(true)
 
   const handleLogout = () => {
     clearUser()
     navigate('/login')
   }
 
+  const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && searchQuery.trim()) {
+      navigate(`/admin/members?search=${encodeURIComponent(searchQuery.trim())}`)
+    }
+  }
+
+  const toggleNotifs = () => {
+    setIsNotifOpen(!isNotifOpen)
+    if (hasNewNotifs) setHasNewNotifs(false)
+  }
+
   const navItems = [
     { to: '/admin', icon: LayoutDashboard, label: 'Dashboard', end: true },
     { to: '/admin/members', icon: Users, label: 'Members' },
     { to: '/admin/statements', icon: FileText, label: 'Statements' },
-    { to: '/admin/notices', icon: Bell, label: 'Notices' },
-    { to: '/admin/support', icon: MessageSquare, label: 'Support Queries' },
+    { to: '/admin/notices', icon: Bell, label: 'Notices & Circulars' },
+    { to: '/admin/website-cms', icon: LayoutDashboard, label: 'Website CMS' },
+    { to: '/admin/queries', icon: MessageSquare, label: 'Support Queries' },
     { to: '/admin/activity', icon: Activity, label: 'Activity Log' },
     { to: '/admin/settings', icon: Settings, label: 'Settings' },
   ]
@@ -123,14 +141,52 @@ export function AdminLayout() {
               <input
                 type="text"
                 placeholder="Search member ID or name..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={handleSearchKeyDown}
                 className="h-10 pl-9 pr-4 rounded-[4px] border border-ledger-rule bg-white text-sm font-body focus:outline-none focus:ring-2 focus:ring-warm-gold focus:border-warm-gold w-64"
               />
             </div>
 
-            <button className="relative text-dark-mahogany hover:text-warm-gold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-warm-gold rounded-full p-1">
-              <Bell className="h-5 w-5" />
-              <span className="absolute top-0 right-0 h-2 w-2 rounded-full bg-deep-crimson" />
-            </button>
+            <div className="relative">
+              <button 
+                onClick={toggleNotifs}
+                className="relative text-dark-mahogany hover:text-warm-gold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-warm-gold rounded-full p-1"
+              >
+                <Bell className="h-5 w-5" />
+                {hasNewNotifs && (
+                  <span className="absolute top-0 right-0 h-2 w-2 rounded-full bg-deep-crimson" />
+                )}
+              </button>
+
+              {isNotifOpen && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setIsNotifOpen(false)} />
+                  <div className="absolute right-0 mt-2 w-80 bg-white rounded-[6px] shadow-paper border border-ledger-rule z-50 overflow-hidden animate-fade-slide-up">
+                    <div className="p-4 border-b border-ledger-rule bg-ivory/50">
+                      <h3 className="font-display font-medium text-dark-mahogany">Notifications</h3>
+                    </div>
+                    <div className="max-h-96 overflow-y-auto">
+                      <div className="p-4 border-b border-ledger-rule hover:bg-warm-gold/5 transition-colors cursor-pointer">
+                        <p className="text-sm font-medium text-dark-mahogany mb-1">Database Backup Completed</p>
+                        <p className="text-xs text-mahogany-muted">The scheduled daily backup was successful.</p>
+                        <p className="text-[10px] text-mahogany-muted/70 mt-2">2 hours ago</p>
+                      </div>
+                      <div className="p-4 border-b border-ledger-rule hover:bg-warm-gold/5 transition-colors cursor-pointer">
+                        <p className="text-sm font-medium text-dark-mahogany mb-1">New Member Registration</p>
+                        <p className="text-xs text-mahogany-muted">SC-00849 has submitted KYC documents for approval.</p>
+                        <p className="text-[10px] text-mahogany-muted/70 mt-2">5 hours ago</p>
+                      </div>
+                    </div>
+                    <div className="p-3 bg-ivory/50 text-center border-t border-ledger-rule">
+                      <button className="text-xs font-medium text-warm-gold hover:text-warm-gold-hover transition-colors">
+                        Mark all as read
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
 
             <div className="h-9 w-9 rounded-full bg-deep-saffron flex items-center justify-center text-ivory font-display font-bold text-sm">
               {user?.name?.charAt(0).toUpperCase() || 'A'}

@@ -4,13 +4,30 @@ import { LedgerRow } from '@/components/ui/LedgerRow'
 import { Badge } from '@/components/ui/Badge'
 import { Input } from '@/components/ui/FormControls'
 import { useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import apiClient from '@/api/client'
 import { calculateEMI, formatINR } from '@/lib/utils'
 import { Calculator } from 'lucide-react'
+import { format } from 'date-fns'
 
 export function LandingPage() {
   const [principal, setPrincipal] = useState('500000')
   const [months, setMonths] = useState('60')
   const [rate, setRate] = useState('9.5')
+
+  const { data: aboutData } = useQuery({
+    queryKey: ['public.content.about_us'],
+    queryFn: () => apiClient.get('/public/content/public.content.about_us').then(res => res.data),
+  })
+
+  const { data: noticesData, isLoading: isLoadingNotices } = useQuery({
+    queryKey: ['publicNotices'],
+    queryFn: () => apiClient.get('/notices').then(res => res.data),
+  })
+  const notices = noticesData?.data || noticesData || []
+  const recentNotices = notices.slice(0, 3)
+
+  const aboutText = aboutData?.text || 'Shree Crystal Co-op has been the financial backbone of our local community for over three decades, offering secure savings and accessible credit with unparalleled transparency.'
 
   const emi = calculateEMI(Number(principal), Number(rate), Number(months))
 
@@ -74,8 +91,8 @@ export function LandingPage() {
                 <p><span className="text-dark-mahogany font-medium">Members:</span> 1,847 Active</p>
                 <p><span className="text-dark-mahogany font-medium">Auditor:</span> V.K. Shah & Co.</p>
               </div>
-              <div className="text-body font-body text-dark-mahogany">
-                Shree Crystal Co-op has been the financial backbone of our local community for over three decades, offering secure savings and accessible credit with unparalleled transparency.
+              <div className="text-body font-body text-dark-mahogany whitespace-pre-wrap">
+                {aboutText}
               </div>
             </div>
           </div>
@@ -90,23 +107,29 @@ export function LandingPage() {
             </div>
             
             <div className="border border-ledger-rule rounded-[6px] bg-white overflow-hidden shadow-paper">
-              <LedgerRow
-                stamped
-                title="Annual General Meeting 2025"
-                badge={<Badge variant="agm">AGM</Badge>}
-                date="15 Mar 2025"
-              />
-              <LedgerRow
-                title="Revision of Fixed Deposit Interest Rates"
-                badge={<Badge variant="general">General</Badge>}
-                date="10 Mar 2025"
-              />
-              <LedgerRow
-                stamped
-                title="Dividend Declaration for FY 23-24"
-                badge={<Badge variant="general">General</Badge>}
-                date="02 Mar 2025"
-              />
+              {isLoadingNotices ? (
+                <div className="p-8 text-center text-mahogany-muted font-body">Loading notices...</div>
+              ) : recentNotices.length === 0 ? (
+                <div className="p-8 text-center text-mahogany-muted font-body">No public notices available.</div>
+              ) : (
+                recentNotices.map((notice: any, index: number) => (
+                  <LedgerRow
+                    key={notice.id}
+                    stamped={index % 2 === 0} // Alternate stamped styling just for visual variety
+                    title={notice.title}
+                    badge={
+                      notice.category?.toLowerCase() === 'agm' ? (
+                        <Badge variant="agm">AGM</Badge>
+                      ) : notice.priority === 'HIGH' ? (
+                        <Badge variant="urgent">Important</Badge>
+                      ) : notice.category ? (
+                        <Badge variant="general">{notice.category}</Badge>
+                      ) : undefined
+                    }
+                    date={notice.createdAt ? format(new Date(notice.createdAt), 'dd MMM yyyy') : ''}
+                  />
+                ))
+              )}
             </div>
           </div>
         </div>
