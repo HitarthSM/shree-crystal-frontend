@@ -64,20 +64,25 @@ export function OTPLogin() {
       // Now fetch the real user profile
       const userProfile = await authApi.getMe()
       
+      const userType = userProfile.userType || (userProfile.role ? 'ADMIN' : 'MEMBER')
+      const role = (userType === 'ADMIN'
+        ? (userProfile.role || 'admin').toLowerCase()
+        : 'member') as any
+
       setUser({
         id: userProfile.id,
         memberId: userProfile.memberId || userProfile.email,
         name: userProfile.name || userProfile.fullName,
         mobile: userProfile.mobile || '',
         email: userProfile.email,
-        role: (userProfile.role || (userProfile.email ? 'admin' : 'member')).toLowerCase(),
+        role,
       })
       
       toast.success('Logged in successfully')
       
-      const from = location.state?.from || (userProfile.email ? '/admin' : '/dashboard')
+      const from = location.state?.from || (userType === 'ADMIN' ? '/admin' : '/dashboard')
       navigate(from, { replace: true })
-    } catch (error) {
+    } catch {
       toast.error('Invalid or expired OTP')
     }
   }

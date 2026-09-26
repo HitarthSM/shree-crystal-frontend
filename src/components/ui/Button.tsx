@@ -37,7 +37,7 @@ const buttonVariants = cva(
           'border border-transparent',
         ],
         gold: [
-          'bg-warm-gold text-white',
+          'bg-warm-gold text-dark-mahogany font-semibold',
           'hover:bg-warm-gold-hover active:scale-[0.98]',
           'border border-transparent',
         ],
@@ -94,4 +94,5 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
 )
 Button.displayName = 'Button'
 
+// eslint-disable-next-line react-refresh/only-export-components
 export { Button, buttonVariants }

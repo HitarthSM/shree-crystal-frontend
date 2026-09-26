@@ -43,18 +43,23 @@ export function LoginPage() {
       // Fetch user profile immediately
       const userProfile = await authApi.getMe()
       
+      const userType = userProfile.userType || (userProfile.role ? 'ADMIN' : 'MEMBER')
+      const role = (userType === 'ADMIN'
+        ? (userProfile.role || 'admin').toLowerCase()
+        : 'member') as any
+
       setUser({
         id: userProfile.id,
         memberId: userProfile.memberId || userProfile.email,
         name: userProfile.name || userProfile.fullName,
         mobile: userProfile.mobile || '',
         email: userProfile.email,
-        role: (userProfile.role || (userProfile.email ? 'admin' : 'member')).toLowerCase(),
+        role,
       })
       
       toast.success('Logged in successfully!')
       
-      const from = location.state?.from || (userProfile.email ? '/admin' : '/dashboard')
+      const from = location.state?.from || (userType === 'ADMIN' ? '/admin' : '/dashboard')
       navigate(from, { replace: true })
       
     } catch (error: any) {
@@ -84,10 +89,10 @@ export function LoginPage() {
           </Link>
           
           <h1 className="text-display-lg font-display text-ivory mb-6 max-w-sm">
-            Your passbook,<br />digitised.
+            Your passbook,<br />now online.
           </h1>
           <p className="text-body-lg text-ivory/80 font-body max-w-sm">
-            Secure access to your statements, notices, and loan details — trusted since 1985.
+            Easy access to your savings, passbook statements, notices, and loan status — serving our community since 1985.
           </p>
         </div>
 

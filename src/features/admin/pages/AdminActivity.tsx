@@ -15,14 +15,14 @@ export function AdminActivity() {
 
   const { data: logsData, isLoading } = useQuery({
     queryKey: ['activity', { actorType: filterRole !== 'all' ? filterRole.toUpperCase() : undefined }],
-    queryFn: () => apiClient.get('/activity', { params: { actorType: filterRole !== 'all' ? filterRole.toUpperCase() : undefined } }).then(res => res.data)
+    queryFn: () => apiClient.get('/activity-log', { params: { actorType: filterRole !== 'all' ? filterRole.toUpperCase() : undefined } }).then(res => res.data)
   })
   
   const exportMutation = useMutation({
-    mutationFn: (params: any) => apiClient.get('/activity/export', { params, responseType: 'blob' })
+    mutationFn: (params: any) => apiClient.get('/activity-log/export', { params, responseType: 'blob' })
   })
 
-  const logs = logsData?.data || []
+  const logs = logsData?.items || logsData?.data || (Array.isArray(logsData) ? logsData : [])
   
   const filteredLogs = logs.filter((l: any) => 
     !search || l.action.toLowerCase().includes(search.toLowerCase())
@@ -32,7 +32,7 @@ export function AdminActivity() {
     try {
       await exportMutation.mutateAsync({ actorType: filterRole !== 'all' ? filterRole.toUpperCase() : undefined })
       toast.success('Activity log exported successfully')
-    } catch (err) {
+    } catch {
       toast.error('Failed to export activity log')
     }
   }

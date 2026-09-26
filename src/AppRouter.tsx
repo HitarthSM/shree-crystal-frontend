@@ -11,10 +11,12 @@ import { LandingPage } from './features/public/pages/LandingPage'
 
 import { PublicNotices } from './features/public/pages/PublicNotices'
 import { LoginPage } from './features/auth/pages/LoginPage'
-import { OTPLogin } from './features/auth/pages/OTPLogin'
+// import { OTPLogin } from './features/auth/pages/OTPLogin'
 import { ForgotPassword } from './features/auth/pages/ForgotPassword'
 import { AboutPage } from './features/public/pages/AboutPage'
 import { ContactPage } from './features/public/pages/ContactPage'
+import { PrivacyPage } from './features/public/pages/PrivacyPage'
+import { TermsPage } from './features/public/pages/TermsPage'
 
 // Pages - Member
 import { MemberDashboard } from './features/member/pages/MemberDashboard'
@@ -36,11 +38,7 @@ import { AdminSettings } from './features/admin/pages/AdminSettings'
 import { AdminWebsiteCMS } from './features/admin/pages/AdminWebsiteCMS'
 import { AdminQueries } from './features/admin/pages/AdminQueries'
 import { AdminExport } from './features/admin/pages/AdminExport'
-
-// Temporary placeholders until pages are built
-const Placeholder = ({ name }: { name: string }) => (
-  <div className="p-8"><h1 className="text-display-md font-display">{name}</h1><p>Under construction...</p></div>
-)
+import { AdminBackup } from './features/admin/pages/AdminBackup'
 
 const router = createBrowserRouter([
   // Public Routes
@@ -50,11 +48,14 @@ const router = createBrowserRouter([
     children: [
       { index: true, element: <LandingPage /> },
       { path: 'login', element: <LoginPage /> },
-      { path: 'login/otp', element: <OTPLogin /> },
+      // OTP bypassed for easy access: redirect any direct OTP visits to login
+      { path: 'login/otp', element: <Navigate to="/login" replace /> },
       { path: 'forgot-password', element: <ForgotPassword /> },
       { path: 'about', element: <AboutPage /> },
       { path: 'notices', element: <PublicNotices /> },
       { path: 'contact', element: <ContactPage /> },
+      { path: 'privacy', element: <PrivacyPage /> },
+      { path: 'terms', element: <TermsPage /> },
     ],
   },
   
@@ -97,7 +98,7 @@ const router = createBrowserRouter([
           { path: 'activity', element: <AdminActivity /> },
           { path: 'settings', element: <AdminSettings /> },
           { path: 'export', element: <AdminExport /> },
-          { path: 'backup', element: <Placeholder name="Database Backup" /> },
+          { path: 'backup', element: <AdminBackup /> },
         ],
       },
     ],

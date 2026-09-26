@@ -21,7 +21,7 @@ export function ContactPage() {
             Contact Us
           </h1>
           <p className="text-body-lg text-ivory/80 max-w-2xl mx-auto">
-            We are here to assist you. Reach out to our dedicated support team or visit our branch.
+            We are here to help you. Call our office, send an email, or visit our main branch.
           </p>
         </div>
         <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-warm-gold" />

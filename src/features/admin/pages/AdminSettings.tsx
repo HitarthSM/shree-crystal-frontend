@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
-import { Input, Select } from '@/components/ui/FormControls'
+import { Input } from '@/components/ui/FormControls'
 import { Button } from '@/components/ui/Button'
 import { Save, RefreshCw, Shield, Bell, Building2, Database } from 'lucide-react'
 import { toast } from '@/components/ui/Toast'
@@ -77,36 +77,39 @@ function SocietyDetailsForm() {
   const qc = useQueryClient()
   const { data, isLoading } = useQuery({ queryKey: ['societyDetails'], queryFn: () => apiClient.get('/settings/society').then(r => r.data) })
   const updateMutation = useMutation({
-    mutationFn: (d: any) => apiClient.patch('/settings/society', d).then(r => r.data),
+    mutationFn: (d: any) => apiClient.put('/settings/society', d).then(r => r.data),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['societyDetails'] })
   })
 
   const [name, setName] = useState('')
-  const [registrationNo, setRegistrationNo] = useState('')
+  const [registrationNumber, setRegistrationNumber] = useState('')
   const [address, setAddress] = useState('')
-  const [phone, setPhone] = useState('')
-  const [email, setEmail] = useState('')
+  const [logoUrl, setLogoUrl] = useState('')
 
   useEffect(() => {
     if (data) {
       setName(data.name || '')
-      setRegistrationNo(data.registrationNo || '')
+      setRegistrationNumber(data.registrationNumber || data.registrationNo || '')
       setAddress(data.address || '')
-      setPhone(data.phone || '')
-      setEmail(data.email || '')
+      setLogoUrl(data.logoUrl || '')
     }
   }, [data])
 
   const handleSave = async () => {
     try {
-      await updateMutation.mutateAsync({ name, registrationNo, address, phone, email })
+      await updateMutation.mutateAsync({ 
+        name, 
+        registrationNumber, 
+        address,
+        logoUrl: logoUrl.trim() ? logoUrl.trim() : undefined,
+      })
       toast.success('Society details updated successfully')
-    } catch (err) {
+    } catch {
       toast.error('Failed to update society details')
     }
   }
 
-  if (isLoading) return <div className="text-mahogany-muted">Loading...</div>
+  if (isLoading) return <div className="text-mahogany-muted p-4">Loading society details...</div>
 
   return (
     <Card padding="lg">
@@ -116,10 +119,9 @@ function SocietyDetailsForm() {
       <CardContent className="space-y-6">
         <Input label="Society Name" value={name} onChange={(e) => setName(e.target.value)} />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Input label="Registration Number" value={registrationNo} onChange={(e) => setRegistrationNo(e.target.value)} />
-          <Input label="Email Address" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+          <Input label="Registration Number" value={registrationNumber} onChange={(e) => setRegistrationNumber(e.target.value)} />
+          <Input label="Logo URL (Optional)" type="url" placeholder="https://example.com/logo.png" value={logoUrl} onChange={(e) => setLogoUrl(e.target.value)} />
         </div>
-        <Input label="Phone Number" value={phone} onChange={(e) => setPhone(e.target.value)} />
         <Input label="Full Address" value={address} onChange={(e) => setAddress(e.target.value)} />
         
         <div className="flex justify-end pt-4 border-t border-ledger-rule">
@@ -134,41 +136,41 @@ function SocietyDetailsForm() {
 
 function NotificationGatewayForm() {
   const qc = useQueryClient()
-  const { data, isLoading } = useQuery({ queryKey: ['notifGateway'], queryFn: () => apiClient.get('/settings/notifications').then(r => r.data) })
+  const { data, isLoading } = useQuery({ 
+    queryKey: ['notifGateway'], 
+    queryFn: () => apiClient.get('/settings/notification-gateway').then(r => r.data) 
+  })
   const updateMutation = useMutation({
-    mutationFn: (d: any) => apiClient.patch('/settings/notifications', d).then(r => r.data),
+    mutationFn: (d: any) => apiClient.put('/settings/notification-gateway', d).then(r => r.data),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['notifGateway'] })
   })
 
-  const [smsProvider, setSmsProvider] = useState('TWILIO')
   const [smsApiKey, setSmsApiKey] = useState('')
-  const [emailProvider, setEmailProvider] = useState('SENDGRID')
-  const [emailApiKey, setEmailApiKey] = useState('')
+  const [smtpUrl, setSmtpUrl] = useState('')
+  const [smtpFrom, setSmtpFrom] = useState('')
 
   useEffect(() => {
     if (data) {
-      setSmsProvider(data.smsProvider || 'TWILIO')
-      setEmailProvider(data.emailProvider || 'SENDGRID')
+      setSmtpFrom(data.smtpFrom || '')
     }
   }, [data])
 
   const handleSave = async () => {
     try {
       await updateMutation.mutateAsync({
-        smsProvider,
-        smsApiKey: smsApiKey || undefined,
-        emailProvider,
-        emailApiKey: emailApiKey || undefined,
+        smsApiKey: smsApiKey.trim() || undefined,
+        smtpUrl: smtpUrl.trim() || undefined,
+        smtpFrom: smtpFrom.trim() || undefined,
       })
       toast.success('Notification gateway updated successfully')
-      setSmsApiKey('') // Clear sensitive inputs after save
-      setEmailApiKey('')
-    } catch (err) {
+      setSmsApiKey('')
+      setSmtpUrl('')
+    } catch {
       toast.error('Failed to update gateway configurations')
     }
   }
 
-  if (isLoading) return <div className="text-mahogany-muted">Loading...</div>
+  if (isLoading) return <div className="text-mahogany-muted p-4">Loading gateway config...</div>
 
   return (
     <Card padding="lg">
@@ -177,38 +179,43 @@ function NotificationGatewayForm() {
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="space-y-4">
-          <h3 className="text-sm font-data font-semibold text-dark-mahogany">SMS Gateway</h3>
-          <Select 
-            label="Provider" 
-            value={smsProvider} 
-            onChange={(e) => setSmsProvider(e.target.value)}
-            options={[{ value: 'TWILIO', label: 'Twilio' }, { value: 'MOCK', label: 'Mock (Console Logging)' }]}
-          />
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-data font-semibold text-dark-mahogany">SMS Gateway</h3>
+            <span className={`text-xs px-2 py-0.5 rounded font-mono ${data?.smsApiKeyConfigured ? 'bg-verdant-green/10 text-verdant-green' : 'bg-slate-100 text-mahogany-muted'}`}>
+              {data?.smsApiKeyConfigured ? '✓ Configured' : 'Not Configured'}
+            </span>
+          </div>
           <Input 
-            label="API Key / Secret" 
+            label="SMS API Key / Secret" 
             type="password" 
-            placeholder={data?.smsConfigured ? '••••••••••••••••' : 'Enter new API Key'}
+            placeholder={data?.smsApiKeyConfigured ? '••••••••••••••••' : 'Enter SMS Gateway API Key'}
             value={smsApiKey}
             onChange={(e) => setSmsApiKey(e.target.value)}
-            hint={data?.smsConfigured ? "An API key is already configured. Entering a new one will override it." : ""}
+            hint={data?.smsApiKeyConfigured ? "An API key is configured. Enter a new key only to replace it." : "Key for sending SMS notifications."}
           />
         </div>
 
         <div className="space-y-4 pt-6 border-t border-ledger-rule">
-          <h3 className="text-sm font-data font-semibold text-dark-mahogany">Email Gateway</h3>
-          <Select 
-            label="Provider" 
-            value={emailProvider} 
-            onChange={(e) => setEmailProvider(e.target.value)}
-            options={[{ value: 'SENDGRID', label: 'SendGrid' }, { value: 'SMTP', label: 'Custom SMTP' }, { value: 'MOCK', label: 'Mock (Console Logging)' }]}
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-data font-semibold text-dark-mahogany">Email (SMTP) Gateway</h3>
+            <span className={`text-xs px-2 py-0.5 rounded font-mono ${data?.smtpUrlConfigured ? 'bg-verdant-green/10 text-verdant-green' : 'bg-slate-100 text-mahogany-muted'}`}>
+              {data?.smtpUrlConfigured ? '✓ Configured' : 'Not Configured'}
+            </span>
+          </div>
+          <Input 
+            label="SMTP Connection URL" 
+            type="password" 
+            placeholder={data?.smtpUrlConfigured ? '••••••••••••••••' : 'smtp://user:pass@smtp.example.com:587'}
+            value={smtpUrl}
+            onChange={(e) => setSmtpUrl(e.target.value)}
+            hint={data?.smtpUrlConfigured ? "SMTP connection is configured. Enter a new connection string to replace." : "Format: smtp://user:password@host:port"}
           />
           <Input 
-            label="API Key / Secret" 
-            type="password" 
-            placeholder={data?.emailConfigured ? '••••••••••••••••' : 'Enter new API Key'}
-            value={emailApiKey}
-            onChange={(e) => setEmailApiKey(e.target.value)}
-            hint={data?.emailConfigured ? "An API key is already configured. Entering a new one will override it." : ""}
+            label="Default Sender Address (From Email)" 
+            type="email" 
+            placeholder="noreply@shree-crystal.com"
+            value={smtpFrom}
+            onChange={(e) => setSmtpFrom(e.target.value)}
           />
         </div>
         
@@ -226,75 +233,147 @@ function SecurityPolicyForm() {
   const qc = useQueryClient()
   const { data, isLoading } = useQuery({ queryKey: ['securityPolicy'], queryFn: () => apiClient.get('/settings/security').then(r => r.data) })
   const updateMutation = useMutation({
-    mutationFn: (d: any) => apiClient.patch('/settings/security', d).then(r => r.data),
+    mutationFn: (d: any) => apiClient.put('/settings/security', d).then(r => r.data),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['securityPolicy'] })
   })
 
-  const [securitySettings, setSecuritySettings] = useState({
-    sessionTimeoutMinutes: 30,
-    maxFailedLogins: 5,
-    requireComplexPasswords: true
-  })
+  const [sessionTimeoutMinutes, setSessionTimeoutMinutes] = useState(30)
+  const [minLength, setMinLength] = useState(8)
+  const [requireUppercase, setRequireUppercase] = useState(true)
+  const [requireLowercase, setRequireLowercase] = useState(true)
+  const [requireNumbers, setRequireNumbers] = useState(true)
+  const [requireSpecialCharacters, setRequireSpecialCharacters] = useState(true)
+  const [loanApproval, setLoanApproval] = useState(true)
+  const [memberApproval, setMemberApproval] = useState(true)
 
   useEffect(() => {
     if (data) {
-      setSecuritySettings({
-        sessionTimeoutMinutes: data.sessionTimeoutMinutes || 30,
-        maxFailedLogins: data.maxLoginAttempts || 5,
-        requireComplexPasswords: data.requireComplexPasswords ?? true
-      })
+      if (data.sessionTimeoutMinutes) setSessionTimeoutMinutes(data.sessionTimeoutMinutes)
+      if (data.passwordPolicy) {
+        setMinLength(data.passwordPolicy.minLength ?? 8)
+        setRequireUppercase(data.passwordPolicy.requireUppercase ?? true)
+        setRequireLowercase(data.passwordPolicy.requireLowercase ?? true)
+        setRequireNumbers(data.passwordPolicy.requireNumbers ?? true)
+        setRequireSpecialCharacters(data.passwordPolicy.requireSpecialCharacters ?? true)
+      }
+      if (data.makerCheckerEnabled) {
+        setLoanApproval(data.makerCheckerEnabled.loanApproval ?? true)
+        setMemberApproval(data.makerCheckerEnabled.memberApproval ?? true)
+      }
     }
   }, [data])
 
   const handleSave = async () => {
     try {
       await updateMutation.mutateAsync({
-        sessionTimeoutMinutes: Number(securitySettings.sessionTimeoutMinutes),
-        maxLoginAttempts: Number(securitySettings.maxFailedLogins),
-        requireComplexPasswords: securitySettings.requireComplexPasswords,
+        sessionTimeoutMinutes: Math.max(1, Number(sessionTimeoutMinutes) || 30),
+        passwordPolicy: {
+          minLength: Math.max(6, Number(minLength) || 8),
+          requireUppercase,
+          requireLowercase,
+          requireNumbers,
+          requireSpecialCharacters,
+        },
+        makerCheckerEnabled: {
+          loanApproval,
+          memberApproval,
+        },
       })
       toast.success('Security policies updated')
-    } catch (err) {
+    } catch {
       toast.error('Failed to update security policies')
     }
   }
 
-  if (isLoading) return <div className="text-mahogany-muted">Loading...</div>
+  if (isLoading) return <div className="text-mahogany-muted p-4">Loading security policy...</div>
 
   return (
     <Card padding="lg">
       <CardHeader className="mb-6">
-        <CardTitle>Security Policies</CardTitle>
+        <CardTitle>Security & Maker-Checker Policies</CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Input 
             label="Session Timeout (Minutes)" 
             type="number" 
-            value={securitySettings.sessionTimeoutMinutes.toString()}
-            onChange={(e) => setSecuritySettings({ ...securitySettings, sessionTimeoutMinutes: parseInt(e.target.value) || 0 })}
-            hint="Idle time before automatic logout"
+            value={sessionTimeoutMinutes.toString()}
+            onChange={(e) => setSessionTimeoutMinutes(parseInt(e.target.value) || 0)}
+            hint="Idle time before automatic logout (Min 1)"
           />
           <Input 
-            label="Max Login Attempts" 
+            label="Password Min Length" 
             type="number" 
-            value={securitySettings.maxFailedLogins.toString()}
-            onChange={(e) => setSecuritySettings({ ...securitySettings, maxFailedLogins: parseInt(e.target.value) || 0 })}
-            hint="Lock account after these many failed attempts"
+            value={minLength.toString()}
+            onChange={(e) => setMinLength(parseInt(e.target.value) || 6)}
+            hint="Minimum character count for passwords (Min 6)"
           />
         </div>
         
-        <div className="flex items-center gap-3">
-          <input 
-            type="checkbox" 
-            id="complex-pass"
-            checked={securitySettings.requireComplexPasswords}
-            onChange={(e) => setSecuritySettings({ ...securitySettings, requireComplexPasswords: e.target.checked })}
-            className="w-4 h-4 text-warm-gold focus:ring-warm-gold border-mahogany-muted rounded"
-          />
-          <label htmlFor="complex-pass" className="text-sm text-dark-mahogany font-body cursor-pointer">
-            Require Complex Passwords (uppercase, numbers, symbols)
-          </label>
+        <div className="space-y-3 pt-4 border-t border-ledger-rule">
+          <h4 className="text-sm font-semibold text-dark-mahogany font-data">Password Complexity Rules</h4>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <label className="flex items-center gap-2 text-sm text-dark-mahogany cursor-pointer">
+              <input 
+                type="checkbox" 
+                checked={requireUppercase} 
+                onChange={(e) => setRequireUppercase(e.target.checked)}
+                className="w-4 h-4 text-warm-gold focus:ring-warm-gold border-mahogany-muted rounded"
+              />
+              Require Uppercase Letters
+            </label>
+            <label className="flex items-center gap-2 text-sm text-dark-mahogany cursor-pointer">
+              <input 
+                type="checkbox" 
+                checked={requireLowercase} 
+                onChange={(e) => setRequireLowercase(e.target.checked)}
+                className="w-4 h-4 text-warm-gold focus:ring-warm-gold border-mahogany-muted rounded"
+              />
+              Require Lowercase Letters
+            </label>
+            <label className="flex items-center gap-2 text-sm text-dark-mahogany cursor-pointer">
+              <input 
+                type="checkbox" 
+                checked={requireNumbers} 
+                onChange={(e) => setRequireNumbers(e.target.checked)}
+                className="w-4 h-4 text-warm-gold focus:ring-warm-gold border-mahogany-muted rounded"
+              />
+              Require Numbers
+            </label>
+            <label className="flex items-center gap-2 text-sm text-dark-mahogany cursor-pointer">
+              <input 
+                type="checkbox" 
+                checked={requireSpecialCharacters} 
+                onChange={(e) => setRequireSpecialCharacters(e.target.checked)}
+                className="w-4 h-4 text-warm-gold focus:ring-warm-gold border-mahogany-muted rounded"
+              />
+              Require Special Characters (!@#$)
+            </label>
+          </div>
+        </div>
+
+        <div className="space-y-3 pt-4 border-t border-ledger-rule">
+          <h4 className="text-sm font-semibold text-dark-mahogany font-data">Maker-Checker Dual Approval</h4>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <label className="flex items-center gap-2 text-sm text-dark-mahogany cursor-pointer">
+              <input 
+                type="checkbox" 
+                checked={loanApproval} 
+                onChange={(e) => setLoanApproval(e.target.checked)}
+                className="w-4 h-4 text-warm-gold focus:ring-warm-gold border-mahogany-muted rounded"
+              />
+              Require Two-Person Loan Approval
+            </label>
+            <label className="flex items-center gap-2 text-sm text-dark-mahogany cursor-pointer">
+              <input 
+                type="checkbox" 
+                checked={memberApproval} 
+                onChange={(e) => setMemberApproval(e.target.checked)}
+                className="w-4 h-4 text-warm-gold focus:ring-warm-gold border-mahogany-muted rounded"
+              />
+              Require Two-Person Member Edit Approval
+            </label>
+          </div>
         </div>
         
         <div className="flex justify-end pt-4 border-t border-ledger-rule">
@@ -309,22 +388,28 @@ function SecurityPolicyForm() {
 
 function BackupStatusForm() {
   const qc = useQueryClient()
-  const { data, isLoading } = useQuery({ queryKey: ['backupStatus'], queryFn: () => apiClient.get('/settings/backup/status').then(r => r.data) })
+  const { data, isLoading } = useQuery({ 
+    queryKey: ['backupStatus'], 
+    queryFn: () => apiClient.get('/settings/backup').then(r => r.data) 
+  })
   const runMutation = useMutation({
-    mutationFn: () => apiClient.post('/settings/backup/run').then(r => r.data),
+    mutationFn: () => apiClient.post('/settings/backup/run-now').then(r => r.data),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['backupStatus'] })
   })
 
   const handleRunBackup = async () => {
     try {
       await runMutation.mutateAsync()
-      toast.success('Manual backup successfully triggered')
-    } catch (err) {
+      toast.success('Manual backup executed successfully')
+    } catch {
       toast.error('Backup failed to run')
     }
   }
 
-  if (isLoading) return <div className="text-mahogany-muted">Loading...</div>
+  if (isLoading) return <div className="text-mahogany-muted p-4">Loading backup status...</div>
+
+  const backupTime = data?.lastBackupTimestamp ? new Date(data.lastBackupTimestamp) : null
+  const isValidTime = backupTime && !isNaN(backupTime.getTime())
 
   return (
     <Card padding="lg">
@@ -334,28 +419,27 @@ function BackupStatusForm() {
       <CardContent className="space-y-6">
         <div className="bg-ledger-paper p-4 border border-ledger-rule rounded-sm flex justify-between items-center">
           <div>
-            <p className="text-sm font-data font-bold text-dark-mahogany">Last Backup Date</p>
+            <p className="text-sm font-data font-bold text-dark-mahogany">Last Backup Timestamp</p>
             <p className="text-sm font-body text-mahogany-muted">
-              {data?.lastBackupDate ? formatDistanceToNow(new Date(data.lastBackupDate), { addSuffix: true }) : 'Never'}
+              {isValidTime ? formatDistanceToNow(backupTime, { addSuffix: true }) : 'Never'}
             </p>
           </div>
           <div className="text-right">
             <p className="text-sm font-data font-bold text-dark-mahogany">Status</p>
-            <p className={`text-sm font-body font-semibold ${data?.lastBackupStatus === 'SUCCESS' ? 'text-verdant-green' : data?.lastBackupStatus === 'FAILED' ? 'text-deep-crimson' : 'text-mahogany-muted'}`}>
-              {data?.lastBackupStatus || 'UNKNOWN'}
+            <p className={`text-sm font-body font-semibold ${data?.status === 'SUCCESS' ? 'text-verdant-green' : data?.status === 'FAILED' ? 'text-deep-crimson' : 'text-mahogany-muted'}`}>
+              {data?.status || 'PENDING'}
             </p>
           </div>
         </div>
         
-        {data?.lastBackupError && (
-          <div className="p-4 bg-deep-crimson/10 border-l-4 border-deep-crimson text-sm text-deep-crimson font-body">
-            <strong>Last Error: </strong> {data.lastBackupError}
-          </div>
-        )}
-        
         <div className="flex justify-end pt-4 border-t border-ledger-rule">
-          <Button variant="primary" leftIcon={<RefreshCw className={`h-4 w-4 ${runMutation.isPending ? 'animate-spin' : ''}`} />} onClick={handleRunBackup} disabled={runMutation.isPending}>
-            Run Manual Backup Now
+          <Button 
+            variant="primary" 
+            leftIcon={<RefreshCw className={`h-4 w-4 ${runMutation.isPending ? 'animate-spin' : ''}`} />} 
+            onClick={handleRunBackup} 
+            disabled={runMutation.isPending}
+          >
+            {runMutation.isPending ? 'Running Backup...' : 'Run Manual Backup Now'}
           </Button>
         </div>
       </CardContent>

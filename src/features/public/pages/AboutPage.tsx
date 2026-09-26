@@ -13,8 +13,8 @@ export function AboutPage() {
     queryFn: () => apiClient.get('/public/content/public.content.vision_mission').then(res => res.data),
   })
 
-  const aboutText = aboutData?.text || 'Shree Crystal Co-op has been the financial backbone of our local community for over three decades, offering secure savings and accessible credit with unparalleled transparency.'
-  const visionText = visionData?.text || 'Our vision is to empower our members financially through transparent, secure, and easily accessible co-operative banking services.'
+  const aboutText = aboutData?.text || 'For over 35 years, Shree Crystal Co-op has been a trusted financial home for local families, shopkeepers, and small businesses. We offer secure savings and affordable loans with complete honesty and transparency.'
+  const visionText = visionData?.text || 'Our mission is to help every member build a secure financial future through safe savings, fair credit, and honest co-operative service.'
 
   return (
     <div className="bg-ivory min-h-screen pb-20">
@@ -24,7 +24,7 @@ export function AboutPage() {
             About Us
           </h1>
           <p className="text-body-lg text-ivory/80 max-w-2xl mx-auto">
-            Discover our history, our values, and our commitment to the community.
+            Learn about our journey, our values, and our dedication to serving our members.
           </p>
         </div>
         <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-warm-gold" />

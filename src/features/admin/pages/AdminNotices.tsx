@@ -22,7 +22,7 @@ export function AdminNotices() {
     queryKey: ['notices'],
     queryFn: () => apiClient.get('/notices').then(res => res.data)
   })
-  const notices = noticesData?.data || []
+  const notices = noticesData?.items || noticesData?.data || (Array.isArray(noticesData) ? noticesData : [])
 
   const createNotice = useMutation({
     mutationFn: (data: any) => apiClient.post('/notices', data).then(res => res.data),
@@ -53,7 +53,7 @@ export function AdminNotices() {
     try {
       await deleteNotice.mutateAsync(id)
       toast.success('Notice deleted')
-    } catch (err: any) {
+    } catch {
       toast.error('Failed to delete notice')
     }
   }

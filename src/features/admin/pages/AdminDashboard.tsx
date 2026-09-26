@@ -11,20 +11,64 @@ import {
   AlertCircle
 } from 'lucide-react'
 import { Link } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import apiClient from '@/api/client'
+import { toast } from '@/components/ui/Toast'
 import { formatDistanceToNow } from 'date-fns'
+
 export function AdminDashboard() {
+  const queryClient = useQueryClient()
   const { data, isLoading } = useQuery({
     queryKey: ['adminDashboard'],
     queryFn: () => apiClient.get('/dashboard/admin').then(res => res.data)
   })
 
+  const approveMutation = useMutation({
+    mutationFn: (id: string) => apiClient.post(`/pending-actions/${id}/approve`),
+    onSuccess: () => {
+      toast.success('Action approved successfully')
+      queryClient.invalidateQueries({ queryKey: ['adminDashboard'] })
+    },
+    onError: (err: any) => {
+      toast.error(err.response?.data?.message || 'Failed to approve action')
+    }
+  })
+
+  const rejectMutation = useMutation({
+    mutationFn: ({ id, reason }: { id: string; reason: string }) => 
+      apiClient.post(`/pending-actions/${id}/reject`, { reason }),
+    onSuccess: () => {
+      toast.success('Action rejected')
+      queryClient.invalidateQueries({ queryKey: ['adminDashboard'] })
+    },
+    onError: (err: any) => {
+      toast.error(err.response?.data?.message || 'Failed to reject action')
+    }
+  })
+
+  const handleApprove = (id: string, actionType: string) => {
+    const formatted = actionType ? actionType.replace(/_/g, ' ') : 'request'
+    if (window.confirm(`Are you sure you want to approve this ${formatted}?`)) {
+      approveMutation.mutate(id)
+    }
+  }
+
+  const handleReject = (id: string, actionType: string) => {
+    const formatted = actionType ? actionType.replace(/_/g, ' ') : 'request'
+    const reason = window.prompt(`Please enter the reason for rejecting this ${formatted}:`)
+    if (reason === null) return
+    if (!reason.trim()) {
+      toast.error('A rejection reason is required.')
+      return
+    }
+    rejectMutation.mutate({ id, reason: reason.trim() })
+  }
+
   const stats = [
-    { label: 'Total Active Members', value: data?.stats.totalActiveMembers || 0, trend: 'Current' },
-    { label: 'Pending Approvals', value: data?.stats.pendingApprovalsCount || 0, trend: 'Needs action' },
-    { label: 'Total Loan Disbursed', value: formatINR(data?.stats.totalLoanDisbursed || 0), trend: 'FY 24-25' },
-    { label: 'Active Deposits', value: formatINR(data?.stats.activeDeposits || 0), trend: 'FY 24-25' },
+    { label: 'Registered Members', value: data?.stats.totalActiveMembers || 0, trend: 'Current Total' },
+    { label: 'Requests to Approve', value: data?.stats.pendingApprovalsCount || 0, trend: 'Action needed' },
+    { label: 'Total Loans Given', value: formatINR(data?.stats.totalLoanDisbursed || 0), trend: 'FY 24-25' },
+    { label: 'Member Deposits', value: formatINR(data?.stats.activeDeposits || 0), trend: 'FY 24-25' },
   ]
 
   const pendingApprovals = data?.pendingApprovals || []
@@ -38,11 +82,11 @@ export function AdminDashboard() {
             Admin Dashboard
           </h1>
           <p className="text-body text-mahogany-muted">
-            Overview of society operations and pending actions.
+            Society overview and day-to-day administrative tasks.
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <StatusDot status="ok" label="Systems Operational" />
+          <StatusDot status="ok" label="All Systems Working" />
         </div>
       </header>
 
@@ -83,7 +127,7 @@ export function AdminDashboard() {
           <CardHeader className="p-6 pb-4 border-b border-ledger-rule flex justify-between items-center bg-deep-crimson/5 rounded-t-[6px]">
             <CardTitle className="text-lg flex items-center gap-2">
               <AlertCircle className="h-5 w-5 text-deep-crimson" />
-              Pending Approvals
+              Requests Waiting for Approval
             </CardTitle>
             <Badge variant="urgent">{pendingApprovals.length}</Badge>
           </CardHeader>
@@ -93,22 +137,34 @@ export function AdminDashboard() {
                 <div className="p-6 text-center text-mahogany-muted text-sm font-body">Loading...</div>
               ) : pendingApprovals.length === 0 ? (
                 <div className="p-6 text-center text-mahogany-muted text-sm font-body">
-                  All caught up. No pending approvals.
+                  All caught up! There are no pending requests right now.
                 </div>
               ) : (
                 pendingApprovals.map((item: any) => (
                   <LedgerRow
                     key={item.id}
-                    title={item.entityType}
+                    title={item.actionType ? item.actionType.replace(/_/g, ' ') : 'Pending Request'}
                     subtitle={`Status: ${item.status}`}
                     date={formatDistanceToNow(new Date(item.createdAt), { addSuffix: true })}
                     className="px-6 py-4"
                     mono={
-                      <div className="flex gap-2 mt-1">
-                        <button className="p-1 text-verdant-green hover:bg-verdant-green/10 rounded-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-verdant-green">
+                      <div className="flex items-center gap-1 mt-1">
+                        <button 
+                          onClick={() => handleApprove(item.id, item.actionType)}
+                          disabled={approveMutation.isPending || rejectMutation.isPending}
+                          title="Approve Action"
+                          aria-label="Approve Action"
+                          className="min-h-[44px] min-w-[44px] p-2 text-verdant-green hover:bg-verdant-green/10 rounded-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-verdant-green disabled:opacity-50 flex items-center justify-center"
+                        >
                           <CheckCircle2 className="h-5 w-5" />
                         </button>
-                        <button className="p-1 text-deep-crimson hover:bg-deep-crimson/10 rounded-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-deep-crimson">
+                        <button 
+                          onClick={() => handleReject(item.id, item.actionType)}
+                          disabled={approveMutation.isPending || rejectMutation.isPending}
+                          title="Reject Action"
+                          aria-label="Reject Action"
+                          className="min-h-[44px] min-w-[44px] p-2 text-deep-crimson hover:bg-deep-crimson/10 rounded-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-deep-crimson disabled:opacity-50 flex items-center justify-center"
+                        >
                           <XCircle className="h-5 w-5" />
                         </button>
                       </div>
@@ -123,10 +179,10 @@ export function AdminDashboard() {
         {/* Recent Activity Log */}
         <Card padding="none">
           <CardHeader className="p-6 pb-4 border-b border-ledger-rule flex justify-between items-center">
-            <CardTitle className="text-lg">System Activity Log</CardTitle>
-            <button className="text-sm font-body text-warm-gold hover:text-warm-gold-hover">
-              View Full Log
-            </button>
+            <CardTitle className="text-lg">Recent Society Activity</CardTitle>
+            <Link to="/admin/activity" className="text-sm font-medium text-warm-gold hover:text-warm-gold-hover">
+              View Full History
+            </Link>
           </CardHeader>
           <CardContent className="p-0">
             <div className="divide-y divide-ledger-rule">
@@ -134,7 +190,7 @@ export function AdminDashboard() {
                 <div className="p-6 text-center text-mahogany-muted text-sm font-body">Loading...</div>
               ) : recentActivity.length === 0 ? (
                 <div className="p-6 text-center text-mahogany-muted text-sm font-body">
-                  No recent activity found.
+                  No recent activity recorded yet.
                 </div>
               ) : (
                 recentActivity.map((log: any) => (

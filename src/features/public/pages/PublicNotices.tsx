@@ -13,7 +13,7 @@ export function PublicNotices() {
     queryFn: () => apiClient.get('/notices').then(res => res.data)
   })
   // The API interceptor unwraps `res.data` in some cases, so we handle both unwrapped and wrapped formats
-  const notices = noticesData?.data || noticesData || []
+  const notices = noticesData?.items || noticesData?.data || (Array.isArray(noticesData) ? noticesData : [])
 
   return (
     <div className="space-y-8 animate-fade-slide-up pb-12 w-full max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">

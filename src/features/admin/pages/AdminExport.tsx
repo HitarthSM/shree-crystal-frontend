@@ -4,18 +4,77 @@ import { Button } from '@/components/ui/Button'
 import { Select } from '@/components/ui/FormControls'
 import { Download, FileText, Users, Database } from 'lucide-react'
 import { toast } from '@/components/ui/Toast'
+import apiClient from '@/api/client'
 
 export function AdminExport() {
   const [exportType, setExportType] = useState('members')
   const [format, setFormat] = useState('csv')
   const [isExporting, setIsExporting] = useState(false)
 
+  const triggerDownload = (blob: Blob, filename: string) => {
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = filename
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+  }
+
   const handleExport = async () => {
     setIsExporting(true)
-    // Mock download delay
-    await new Promise(r => setTimeout(r, 1500))
-    setIsExporting(false)
-    toast.success(`${exportType.charAt(0).toUpperCase() + exportType.slice(1)} data exported successfully as ${format.toUpperCase()}`)
+    try {
+      if (exportType === 'audit') {
+        const response = await apiClient.get('/activity-log/export', { responseType: 'blob' })
+        const blob = new Blob([response.data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+        triggerDownload(blob, `audit_logs_${new Date().toISOString().slice(0, 10)}.xlsx`)
+      } else if (exportType === 'members') {
+        const res = await apiClient.get('/members', { params: { limit: 1000 } })
+        const items = res.data?.data || res.data || []
+        if (format === 'json') {
+          const blob = new Blob([JSON.stringify(items, null, 2)], { type: 'application/json' })
+          triggerDownload(blob, `members_export_${new Date().toISOString().slice(0, 10)}.json`)
+        } else {
+          const headers = ['Member No', 'Full Name', 'Mobile', 'Status', 'Date of Joining', 'Address']
+          const rows = items.map((m: any) => [
+            m.memberId || '',
+            `"${(m.fullName || '').replace(/"/g, '""')}"`,
+            m.mobile || '',
+            m.status || '',
+            m.dateOfJoining ? new Date(m.dateOfJoining).toLocaleDateString() : '',
+            `"${(m.addressLine1 || '').replace(/"/g, '""')}"`
+          ].join(','))
+          const csv = [headers.join(','), ...rows].join('\n')
+          const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+          triggerDownload(blob, `members_directory_${new Date().toISOString().slice(0, 10)}.csv`)
+        }
+      } else if (exportType === 'statements') {
+        const res = await apiClient.get('/statements/admin', { params: { limit: 1000 } })
+        const items = res.data?.data || res.data || []
+        if (format === 'json') {
+          const blob = new Blob([JSON.stringify(items, null, 2)], { type: 'application/json' })
+          triggerDownload(blob, `statements_export_${new Date().toISOString().slice(0, 10)}.json`)
+        } else {
+          const headers = ['Period', 'Member ID', 'Category', 'Closing Balance', 'Status']
+          const rows = items.map((s: any) => [
+            s.period || '',
+            s.member?.memberId || s.memberId || '',
+            s.category || '',
+            s.closingBalance || 0,
+            s.status || ''
+          ].join(','))
+          const csv = [headers.join(','), ...rows].join('\n')
+          const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+          triggerDownload(blob, `statements_export_${new Date().toISOString().slice(0, 10)}.csv`)
+        }
+      }
+      toast.success(`${exportType.charAt(0).toUpperCase() + exportType.slice(1)} data exported successfully`)
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Failed to export data. Please try again.')
+    } finally {
+      setIsExporting(false)
+    }
   }
 
   return (

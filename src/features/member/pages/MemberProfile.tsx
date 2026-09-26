@@ -21,7 +21,7 @@ export function MemberProfile() {
     try {
       const res = await changeMutation.mutateAsync({ type: 'KYC_UPDATE' })
       toast.success(res.message || 'Change request submitted for admin approval')
-    } catch (err) {
+    } catch {
       toast.error('Failed to submit change request')
     }
   }
@@ -41,7 +41,7 @@ export function MemberProfile() {
           Member Profile
         </h1>
         <p className="text-body text-mahogany-muted">
-          Your official society records and KYC information.
+          Your official society membership records and verified details.
         </p>
       </header>
 
@@ -90,7 +90,9 @@ export function MemberProfile() {
               </div>
               <div className="sm:col-span-2">
                 <p className="text-sm font-body text-mahogany-muted mb-1 flex items-center gap-1.5"><MapPin className="h-4 w-4" /> Registered Address</p>
-                <p className="font-body text-dark-mahogany">{profile.address || 'Not registered'}</p>
+                <p className="font-body text-dark-mahogany">
+                  {profile.address || [profile.addressLine1, profile.addressLine2, profile.city, profile.state, profile.pincode].filter(Boolean).join(', ') || 'Not registered'}
+                </p>
               </div>
             </div>
           </section>
@@ -98,7 +100,7 @@ export function MemberProfile() {
           <section>
             <h3 className="flex items-center gap-2 font-display text-lg text-dark-mahogany mb-4 border-b border-ledger-rule pb-2">
               <ShieldCheck className="h-5 w-5 text-warm-gold" />
-              KYC & Compliance
+              Identity Verification (KYC)
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 bg-white p-6 rounded-[6px] border border-ledger-rule shadow-paper">
               <div>
@@ -111,7 +113,7 @@ export function MemberProfile() {
               </div>
               <div className="sm:col-span-2 pt-4 mt-2 border-t border-ledger-rule/50 flex justify-between items-center">
                 <div>
-                  <p className="text-sm font-body text-mahogany-muted mb-0.5">KYC Status</p>
+                  <p className="text-sm font-body text-mahogany-muted mb-0.5">Verification Status</p>
                   <p className="text-verdant-green text-sm font-medium flex items-center gap-1.5">
                     <ShieldCheck className="h-4 w-4" />
                     Verified
@@ -122,7 +124,7 @@ export function MemberProfile() {
                   disabled={changeMutation.isPending}
                   className="text-sm font-medium text-warm-gold hover:text-warm-gold-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-warm-gold rounded-sm disabled:opacity-50"
                 >
-                  {changeMutation.isPending ? 'Submitting...' : 'Update KYC'}
+                  {changeMutation.isPending ? 'Submitting...' : 'Request Info Update'}
                 </button>
               </div>
             </div>
@@ -131,15 +133,15 @@ export function MemberProfile() {
           <section>
             <h3 className="flex items-center gap-2 font-display text-lg text-dark-mahogany mb-4 border-b border-ledger-rule pb-2">
               <Building2 className="h-5 w-5 text-warm-gold" />
-              Society Details
+              Society Membership & Shares
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 bg-white p-6 rounded-[6px] border border-ledger-rule shadow-paper">
               <div>
-                <p className="text-sm font-body text-mahogany-muted mb-1">Share Capital</p>
+                <p className="text-sm font-body text-mahogany-muted mb-1">Society Shares Amount</p>
                 <p className="font-data text-dark-mahogany">₹ 5000</p>
               </div>
               <div>
-                <p className="text-sm font-body text-mahogany-muted mb-1">Registered Nominee</p>
+                <p className="text-sm font-body text-mahogany-muted mb-1">Registered Nominee (Warasa)</p>
                 <p className="font-body text-dark-mahogany">Not registered</p>
               </div>
             </div>

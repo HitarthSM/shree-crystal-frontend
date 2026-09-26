@@ -51,19 +51,19 @@ export function ForgotPassword() {
               Request Submitted
             </h2>
             <p className="text-body text-mahogany-muted mb-8">
-              If an account matches the provided details, we have sent instructions to reset your password to the registered mobile number and email.
+              If your Member ID or mobile number is registered, we have sent password reset instructions to your phone and email.
             </p>
-            <Link to="/login" className="inline-flex items-center justify-center gap-2 font-body font-medium rounded-[4px] transition-all duration-[120ms] ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-warm-gold focus-visible:ring-offset-2 bg-warm-gold text-white hover:bg-warm-gold-hover h-11 px-4 text-base w-full">
-              Return to Login
+            <Link to="/login" className="inline-flex items-center justify-center gap-2 font-body font-semibold rounded-[4px] transition-all duration-[120ms] ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-warm-gold focus-visible:ring-offset-2 bg-warm-gold text-dark-mahogany hover:bg-warm-gold-hover h-11 px-4 text-base w-full">
+              Back to Login
             </Link>
           </div>
         ) : (
           <>
             <h2 className="text-display-sm font-display text-dark-mahogany mb-2">
-              Reset Password
+              Forgot Your Password?
             </h2>
             <p className="text-body text-mahogany-muted mb-8">
-              Enter your Member ID or registered mobile number to receive reset instructions.
+              Enter your Member ID or registered mobile number to reset your password.
             </p>
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -74,7 +74,7 @@ export function ForgotPassword() {
                 placeholder="e.g., SC-00847 or 9876543210"
               />
               <Button type="submit" variant="gold" fullWidth isLoading={isSubmitting}>
-                Send Reset Instructions
+                Send Password Reset Link
               </Button>
             </form>
           </>

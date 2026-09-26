@@ -54,6 +54,26 @@ export function AdminMemberImport() {
     }
   }
 
+  const handleDownloadTemplate = () => {
+    const csvContent = [
+      'MEMBER_NO,MEMBER_NAME,MOBILE,AADHAR,BIRTH_DATE,SEX,ADD1,ADD2,DISTNAME',
+      'SCC-00001,Rajeshbhai Patel,9825012345,123456789012,1980-05-15,M,12 Shanti Nagar,Near S.T. Stand,Surat',
+      'SCC-00002,Meenaben Shah,9825098765,987654321098,1985-11-20,F,45 Swastik Society,Station Road,Ahmedabad',
+      'SCC-00003,Kiritbhai Desai,9825045678,234567890123,1976-08-10,M,78 Sardar Patel Colony,Adajan,Surat',
+    ].join('\n')
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.setAttribute('download', 'member_import_template.csv')
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+    toast.success('Sample member import template downloaded.')
+  }
+
   return (
     <div className="space-y-8 animate-fade-slide-up max-w-4xl">
       <header className="flex flex-col gap-4">
@@ -77,12 +97,12 @@ export function AdminMemberImport() {
       {/* Stepper */}
       <div className="flex items-center gap-4 mb-8">
         <div className={`flex items-center gap-2 ${step >= 1 ? 'text-dark-mahogany' : 'text-mahogany-muted'}`}>
-          <div className={`h-6 w-6 rounded-full flex items-center justify-center text-xs font-bold ${step >= 1 ? 'bg-warm-gold text-white' : 'bg-ledger-rule'}`}>1</div>
+          <div className={`h-6 w-6 rounded-full flex items-center justify-center text-xs font-bold ${step >= 1 ? 'bg-warm-gold text-dark-mahogany' : 'bg-ledger-rule'}`}>1</div>
           <span className="font-body text-sm font-medium">Upload CSV</span>
         </div>
         <div className="h-px bg-ledger-rule flex-1 max-w-[40px]" />
         <div className={`flex items-center gap-2 ${step >= 2 ? 'text-dark-mahogany' : 'text-mahogany-muted'}`}>
-          <div className={`h-6 w-6 rounded-full flex items-center justify-center text-xs font-bold ${step >= 2 ? 'bg-warm-gold text-white' : 'bg-ledger-rule'}`}>2</div>
+          <div className={`h-6 w-6 rounded-full flex items-center justify-center text-xs font-bold ${step >= 2 ? 'bg-warm-gold text-dark-mahogany' : 'bg-ledger-rule'}`}>2</div>
           <span className="font-body text-sm font-medium">Preview & Confirm</span>
         </div>
       </div>
@@ -98,7 +118,11 @@ export function AdminMemberImport() {
               Ensure your CSV matches the required template format (Name, Mobile, DOB, Address, PAN, Aadhaar).
             </p>
             <div className="flex gap-4">
-              <Button variant="secondary" leftIcon={<DownloadIcon className="h-4 w-4" />}>
+              <Button 
+                variant="secondary" 
+                onClick={handleDownloadTemplate}
+                leftIcon={<DownloadIcon className="h-4 w-4" />}
+              >
                 Download Template
               </Button>
               <input

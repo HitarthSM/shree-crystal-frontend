@@ -130,7 +130,7 @@ function QueryDetail({ queryId, onClose }: { queryId: string, onClose: () => voi
       })
       toast.success(resolve ? 'Reply sent and ticket resolved!' : 'Reply sent successfully')
       setReplyText('')
-    } catch (err) {
+    } catch {
       toast.error('Failed to send reply')
     }
   }
@@ -178,8 +178,8 @@ function QueryDetail({ queryId, onClose }: { queryId: string, onClose: () => voi
               <div 
                 className={`max-w-[85%] rounded-lg p-3 text-sm font-body shadow-sm ${
                   isAdmin 
-                    ? 'bg-dark-mahogany text-ledger-paper rounded-tr-none' 
-                    : 'bg-ledger-paper border border-ledger-rule text-dark-mahogany rounded-tl-none'
+                    ? 'bg-dark-mahogany text-ivory rounded-tr-none' 
+                    : 'bg-ivory border border-ledger-rule text-dark-mahogany rounded-tl-none'
                 }`}
               >
                 {msg.message}

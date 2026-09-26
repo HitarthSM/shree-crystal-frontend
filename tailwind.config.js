@@ -78,7 +78,12 @@ export default {
         // Toast slide in
         toastIn: {
           '0%': { opacity: '0', transform: 'translateY(-8px) scale(0.96)' },
-          '100%': { opacity: '1', transform: 'translateY(0) scale(1)' },
+          '100%': { transform: 'translateY(0) scale(1)' },
+        },
+        // Floating element
+        float: {
+          '0%, 100%': { transform: 'translateY(0px)' },
+          '50%': { transform: 'translateY(-8px)' },
         },
       },
       animation: {
@@ -87,6 +92,7 @@ export default {
         'fade-slide-up': 'fadeSlideUp 400ms ease-out forwards',
         'slide-in-right': 'slideInRight 350ms ease-out forwards',
         'toast-in': 'toastIn 200ms ease-out forwards',
+        'float': 'float 4s ease-in-out infinite',
       },
       transitionDuration: {
         '120': '120ms',

@@ -16,7 +16,7 @@ export function AdminMembers() {
     queryKey: ['members', { search: searchTerm }],
     queryFn: () => apiClient.get('/members', { params: { search: searchTerm } }).then(res => res.data)
   })
-  const filteredMembers = data?.data || []
+  const filteredMembers = data?.items || data?.data || (Array.isArray(data) ? data : [])
 
   return (
     <div className="space-y-8 animate-fade-slide-up">
@@ -39,7 +39,7 @@ export function AdminMembers() {
           </Link>
           <Link 
             to="/admin/members/add" 
-            className="inline-flex items-center justify-center gap-2 font-body font-medium rounded-[4px] transition-all duration-[120ms] ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-warm-gold focus-visible:ring-offset-2 bg-warm-gold text-white hover:bg-warm-gold-hover h-10 px-4 py-2 text-sm"
+            className="inline-flex items-center justify-center gap-2 font-body font-semibold rounded-[4px] transition-all duration-[120ms] ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-warm-gold focus-visible:ring-offset-2 bg-warm-gold text-dark-mahogany hover:bg-warm-gold-hover h-10 px-4 py-2 text-sm"
           >
             <UserPlus className="h-4 w-4" /> Add Member
           </Link>

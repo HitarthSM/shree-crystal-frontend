@@ -23,10 +23,10 @@ export function MemberSupport() {
       <header className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
           <h1 className="text-display-md font-display text-dark-mahogany mb-1">
-            Support Queries
+            Help & Member Inquiries
           </h1>
           <p className="text-body text-mahogany-muted">
-            Raise tickets and chat directly with society administrators.
+            Ask questions or send requests directly to the society office.
           </p>
         </div>
       </header>
@@ -45,10 +45,10 @@ export function MemberSupport() {
                 }}
               >
                 <PlusCircle className="h-4 w-4" />
-                Raise New Ticket
+                Ask a New Question
               </Button>
               <div className="flex flex-row items-center justify-between">
-                <CardTitle>My Tickets</CardTitle>
+                <CardTitle>My Questions</CardTitle>
                 <div className="w-32">
                   <Select
                     label=""
@@ -66,9 +66,9 @@ export function MemberSupport() {
             <CardContent className="p-0 overflow-y-auto flex-1">
               <div className="divide-y divide-ledger-rule">
                 {isLoading ? (
-                  <div className="p-8 text-center text-mahogany-muted font-body">Loading tickets...</div>
+                  <div className="p-8 text-center text-mahogany-muted font-body">Loading questions...</div>
                 ) : queries.length === 0 ? (
-                  <div className="p-8 text-center text-mahogany-muted font-body">No tickets found.</div>
+                  <div className="p-8 text-center text-mahogany-muted font-body">No questions found.</div>
                 ) : (
                   queries.map((q: any) => (
                     <button
@@ -108,7 +108,7 @@ export function MemberSupport() {
             <Card padding="lg" className="h-[700px] flex items-center justify-center border-dashed">
               <div className="text-center space-y-3">
                 <MessageSquare className="h-12 w-12 text-mahogany-muted/30 mx-auto" />
-                <p className="text-mahogany-muted font-body">Select a ticket from the left or raise a new one.</p>
+                <p className="text-mahogany-muted font-body">Select a question from the left or ask a new one.</p>
               </div>
             </Card>
           )}
@@ -135,22 +135,22 @@ function NewTicketForm({ onCancel, onSuccess }: { onCancel: () => void, onSucces
     }
 
     try {
+      const formattedSubject = category && category !== 'GENERAL' ? `[${category}] ${subject.trim()}` : subject.trim()
       const res = await createMutation.mutateAsync({
-        subject,
-        category,
-        initialMessage: message,
+        subject: formattedSubject,
+        message: message.trim(),
       })
-      toast.success('Ticket created successfully')
+      toast.success('Question submitted successfully')
       onSuccess(res.id)
-    } catch (err) {
-      toast.error('Failed to create ticket')
+    } catch {
+      toast.error('Failed to submit question')
     }
   }
 
   return (
     <Card padding="none" className="h-[700px] flex flex-col relative animate-fade-in bg-white">
       <CardHeader className="p-4 border-b border-ledger-rule flex flex-row items-center justify-between shrink-0 bg-ledger-paper rounded-t-[6px]">
-        <CardTitle className="text-lg">Raise New Ticket</CardTitle>
+        <CardTitle className="text-lg">Ask a Question</CardTitle>
         <button onClick={onCancel} className="p-1 text-mahogany-muted hover:text-dark-mahogany">
           <X className="h-5 w-5" />
         </button>
@@ -172,7 +172,7 @@ function NewTicketForm({ onCancel, onSuccess }: { onCancel: () => void, onSucces
         <div>
           <Input 
             label="Subject"
-            placeholder="Brief summary of your issue..."
+            placeholder="Brief summary of your question..."
             value={subject}
             onChange={(e) => setSubject(e.target.value)}
           />
@@ -180,7 +180,7 @@ function NewTicketForm({ onCancel, onSuccess }: { onCancel: () => void, onSucces
         <div>
           <Textarea 
             label="Message"
-            placeholder="Please describe your issue in detail..."
+            placeholder="Please describe your question or request in detail..."
             rows={8}
             value={message}
             onChange={(e) => setMessage(e.target.value)}
@@ -194,7 +194,7 @@ function NewTicketForm({ onCancel, onSuccess }: { onCancel: () => void, onSucces
             isLoading={createMutation.isPending}
             disabled={!subject.trim() || !message.trim()}
           >
-            Submit Ticket
+            Submit Question
           </Button>
         </div>
       </CardContent>
@@ -210,7 +210,7 @@ function QueryDetail({ queryId, onClose }: { queryId: string, onClose: () => voi
     enabled: !!queryId
   })
   const replyMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: any }) => apiClient.post(`/queries/me/${id}/reply`, data).then(r => r.data),
+    mutationFn: ({ id, data }: { id: string; data: any }) => apiClient.post(`/queries/${id}/messages`, data).then(r => r.data),
     onSuccess: (_, v) => { qc.invalidateQueries({ queryKey: ['memberQuery', v.id] }); qc.invalidateQueries({ queryKey: ['memberQueries'] }) }
   })
   const reopenMutation = useMutation({
@@ -225,11 +225,11 @@ function QueryDetail({ queryId, onClose }: { queryId: string, onClose: () => voi
     try {
       await replyMutation.mutateAsync({
         id: queryId,
-        data: { message: replyText }
+        data: { message: replyText.trim() }
       })
       toast.success('Reply sent successfully')
       setReplyText('')
-    } catch (err) {
+    } catch {
       toast.error('Failed to send reply')
     }
   }
@@ -237,18 +237,18 @@ function QueryDetail({ queryId, onClose }: { queryId: string, onClose: () => voi
   const handleReopen = async () => {
     try {
       await reopenMutation.mutateAsync(queryId)
-      toast.success('Ticket reopened successfully')
-    } catch (err) {
-      toast.error('Failed to reopen ticket')
+      toast.success('Question reopened successfully')
+    } catch {
+      toast.error('Failed to reopen question')
     }
   }
 
   if (isLoading) {
-    return <Card className="h-[700px] flex items-center justify-center"><div className="text-mahogany-muted">Loading thread...</div></Card>
+    return <Card className="h-[700px] flex items-center justify-center"><div className="text-mahogany-muted">Loading messages...</div></Card>
   }
 
   if (!query) {
-    return <Card className="h-[700px] flex items-center justify-center"><div className="text-deep-crimson">Query not found.</div></Card>
+    return <Card className="h-[700px] flex items-center justify-center"><div className="text-deep-crimson">Question not found.</div></Card>
   }
 
   return (
@@ -258,7 +258,7 @@ function QueryDetail({ queryId, onClose }: { queryId: string, onClose: () => voi
         <div>
           <CardTitle className="text-lg leading-tight mb-1">{query.subject}</CardTitle>
           <p className="text-sm text-mahogany-muted">
-            Ticket #{query.id.substring(0, 8)} • Created {format(new Date(query.createdAt), 'dd MMM yyyy')}
+            Request #{query.id.substring(0, 8)} • Asked {format(new Date(query.createdAt), 'dd MMM yyyy')}
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -277,7 +277,7 @@ function QueryDetail({ queryId, onClose }: { queryId: string, onClose: () => voi
             <div key={msg.id} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
               <div className="flex items-center gap-2 mb-1">
                 <span className="text-xs font-semibold text-dark-mahogany">
-                  {isMe ? 'Me' : 'Administrator'}
+                  {isMe ? 'Me' : 'Society Staff'}
                 </span>
                 <span className="text-[10px] text-mahogany-muted">
                   {format(new Date(msg.createdAt), 'dd MMM HH:mm')}
@@ -286,8 +286,8 @@ function QueryDetail({ queryId, onClose }: { queryId: string, onClose: () => voi
               <div 
                 className={`max-w-[85%] rounded-lg p-3 text-sm font-body shadow-sm ${
                   isMe 
-                    ? 'bg-dark-mahogany text-ledger-paper rounded-tr-none' 
-                    : 'bg-ledger-paper border border-ledger-rule text-dark-mahogany rounded-tl-none'
+                    ? 'bg-dark-mahogany text-ivory rounded-tr-none' 
+                    : 'bg-ivory border border-ledger-rule text-dark-mahogany rounded-tl-none'
                 }`}
               >
                 {msg.message}
@@ -299,7 +299,7 @@ function QueryDetail({ queryId, onClose }: { queryId: string, onClose: () => voi
           <div className="flex flex-col items-center justify-center py-6 gap-3">
             <div className="bg-verdant-green/10 text-verdant-green text-xs font-semibold px-3 py-1 rounded-full flex items-center gap-1">
               <CheckCircle2 className="h-3 w-3" />
-              Ticket Resolved
+              Issue Resolved
             </div>
             <Button 
               variant="secondary" 
@@ -309,7 +309,7 @@ function QueryDetail({ queryId, onClose }: { queryId: string, onClose: () => voi
               onClick={handleReopen}
               isLoading={reopenMutation.isPending}
             >
-              Reopen Ticket
+              Reopen Question
             </Button>
           </div>
         )}

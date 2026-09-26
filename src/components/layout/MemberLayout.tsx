@@ -9,10 +9,15 @@ import {
   Building2,
 } from 'lucide-react'
 import { useAuthStore } from '@/store/auth.store'
+import { useLanguageStore } from '@/store/language.store'
+import { translations } from '@/lib/i18n/translations'
+import { LanguageSwitcher } from '@/components/ui/LanguageSwitcher'
 import { cn } from '@/lib/utils'
 
 export function MemberLayout() {
   const { user, clearUser } = useAuthStore()
+  const { language } = useLanguageStore()
+  const t = translations[language]
   const navigate = useNavigate()
 
   const handleLogout = () => {
@@ -21,30 +26,35 @@ export function MemberLayout() {
   }
 
   const navItems = [
-    { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-    { to: '/dashboard/statements', icon: FileText, label: 'My Statements' },
-    { to: '/dashboard/notices', icon: Bell, label: 'Notices' },
-    { to: '/dashboard/profile', icon: User, label: 'Profile' },
-    { to: '/dashboard/support', icon: HelpCircle, label: 'Support' },
+    { to: '/dashboard', icon: LayoutDashboard, label: t.memberNav.dashboard },
+    { to: '/dashboard/statements', icon: FileText, label: t.memberNav.statements },
+    { to: '/dashboard/notices', icon: Bell, label: t.memberNav.notices },
+    { to: '/dashboard/profile', icon: User, label: t.memberNav.profile },
+    { to: '/dashboard/support', icon: HelpCircle, label: t.memberNav.support },
   ]
 
   return (
     <div className="min-h-screen bg-ivory flex flex-col">
       {/* Top Header - Deep Saffron */}
-      <header className="h-20 bg-deep-saffron flex-shrink-0 flex items-center px-6 lg:px-8 z-40 sticky top-0 border-b border-deep-saffron-light">
+      <header className="h-20 bg-deep-saffron flex-shrink-0 flex items-center px-4 sm:px-6 lg:px-8 z-40 sticky top-0 border-b border-deep-saffron-light">
         <div className="max-w-content mx-auto w-full flex items-center justify-between">
           <Link to="/dashboard" className="flex items-center gap-3 text-ivory group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-warm-gold focus-visible:ring-offset-2 focus-visible:ring-offset-deep-saffron rounded-sm">
             <Building2 className="h-8 w-8 text-warm-gold" />
-            <span className="font-display font-bold text-xl tracking-wide hidden sm:inline-block">Shree Crystal Co-op</span>
+            <span className="font-display font-bold text-xl tracking-wide hidden sm:inline-block">{t.nav.societyName}</span>
           </Link>
 
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-3 sm:gap-6">
+            <LanguageSwitcher variant="header" />
+
             <div className="text-right hidden sm:block">
               <p className="font-body font-medium text-ivory text-sm">{user?.name || 'Member'}</p>
               <p className="font-data text-xs text-ivory/60">{user?.memberId || 'SC-00000'}</p>
             </div>
             
-            <button className="relative text-ivory/80 hover:text-warm-gold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-warm-gold rounded-full p-1">
+            <button 
+              aria-label="Notifications"
+              className="relative text-ivory/80 hover:text-warm-gold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-warm-gold rounded-full p-1"
+            >
               <Bell className="h-5 w-5" />
               {/* Notification badge dot */}
               <span className="absolute top-0 right-0 h-2 w-2 rounded-full bg-deep-crimson" />
@@ -53,6 +63,16 @@ export function MemberLayout() {
             <div className="h-10 w-10 rounded-full border-2 border-warm-gold/50 flex items-center justify-center bg-deep-saffron-light text-ivory font-display font-bold text-sm">
               {user?.name?.charAt(0).toUpperCase() || 'M'}
             </div>
+
+            {/* Mobile quick logout */}
+            <button
+              onClick={handleLogout}
+              aria-label={t.memberNav.logout}
+              title={t.memberNav.logout}
+              className="md:hidden text-ivory/80 hover:text-warm-gold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-warm-gold rounded p-1.5"
+            >
+              <LogOut className="h-5 w-5" />
+            </button>
           </div>
         </div>
       </header>
@@ -88,7 +108,7 @@ export function MemberLayout() {
             className="flex items-center gap-3 px-4 py-3 mt-auto text-sm font-medium text-dark-mahogany hover:bg-black/5 rounded-[4px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-warm-gold font-body"
           >
             <LogOut className="h-5 w-5 opacity-70" />
-            Logout
+            {t.memberNav.logout}
           </button>
         </aside>
 

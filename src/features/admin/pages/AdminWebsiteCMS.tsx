@@ -1,10 +1,10 @@
-import { useState } from 'react'
-import { Card, CardHeader, CardTitle, CardContent } from '../../../components/ui/Card'
-import { Button } from '../../../components/ui/Button'
+import { useState, useEffect } from 'react'
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
+import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/FormControls'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import apiClient from '../../../api/client'
-import toast from 'react-hot-toast'
+import apiClient from '@/api/client'
+import { toast } from '@/components/ui/Toast'
 import { Save } from 'lucide-react'
 
 // Simple CMS text editor
@@ -17,41 +17,42 @@ export function AdminWebsiteCMS() {
   const [contactAddress, setContactAddress] = useState('')
 
   // Fetch all existing settings
-  useQuery({
+  const { data: aboutData } = useQuery({
     queryKey: ['public.content.about_us'],
     queryFn: () => apiClient.get('/settings/public-content/public.content.about_us').then(res => res.data),
-    meta: {
-      onSuccess: (data: any) => {
-        if (data && typeof data === 'string') setAboutUsText(data)
-        else if (data?.text) setAboutUsText(data.text)
-      }
-    }
   })
 
-  useQuery({
+  const { data: visionData } = useQuery({
     queryKey: ['public.content.vision_mission'],
     queryFn: () => apiClient.get('/settings/public-content/public.content.vision_mission').then(res => res.data),
-    meta: {
-      onSuccess: (data: any) => {
-        if (data && typeof data === 'string') setVisionText(data)
-        else if (data?.text) setVisionText(data.text)
-      }
-    }
   })
 
-  useQuery({
+  const { data: contactData } = useQuery({
     queryKey: ['public.content.contact_info'],
     queryFn: () => apiClient.get('/settings/public-content/public.content.contact_info').then(res => res.data),
-    meta: {
-      onSuccess: (data: any) => {
-        if (data) {
-          setContactEmail(data.email || '')
-          setContactPhone(data.phone || '')
-          setContactAddress(data.address || '')
-        }
-      }
-    }
   })
+
+  useEffect(() => {
+    if (aboutData) {
+      if (typeof aboutData === 'string') setAboutUsText(aboutData)
+      else if (aboutData.text) setAboutUsText(aboutData.text)
+    }
+  }, [aboutData])
+
+  useEffect(() => {
+    if (visionData) {
+      if (typeof visionData === 'string') setVisionText(visionData)
+      else if (visionData.text) setVisionText(visionData.text)
+    }
+  }, [visionData])
+
+  useEffect(() => {
+    if (contactData) {
+      setContactEmail(contactData.email || '')
+      setContactPhone(contactData.phone || '')
+      setContactAddress(contactData.address || '')
+    }
+  }, [contactData])
 
   const updateSetting = useMutation({
     mutationFn: ({ key, value }: { key: string, value: any }) => 
