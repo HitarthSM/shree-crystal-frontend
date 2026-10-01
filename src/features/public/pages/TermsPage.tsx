@@ -49,7 +49,7 @@ export function TermsPage() {
           </ul>
         </div>
 
-        {/* 2. Digital Portal & OTP Authentication */}
+        {/* 2. Digital Portal & Authentication */}
         <div className="space-y-4">
           <h2 className="text-display-sm font-display text-dark-mahogany border-b border-ledger-rule pb-2 flex items-center gap-2">
             <FileCheck2 className="h-5 w-5 text-warm-gold" />
@@ -60,9 +60,9 @@ export function TermsPage() {
           </p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Card padding="md" className="border-ledger-rule bg-white">
-              <h3 className="text-sm font-bold text-dark-mahogany mb-1">One-Time Password (OTP) Security</h3>
+              <h3 className="text-sm font-bold text-dark-mahogany mb-1">Login Credential Security</h3>
               <p className="text-xs font-body text-mahogany-muted leading-relaxed">
-                Logins are authenticated via secure One-Time Passwords sent to the member’s registered mobile number. Members are strictly advised never to share OTPs or login credentials with any third party or society agent.
+                Logins are authenticated with the member’s registered ID or mobile number and password. Members are strictly advised never to share their password or login credentials with any third party or society agent.
               </p>
             </Card>
 

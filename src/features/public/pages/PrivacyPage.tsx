@@ -68,7 +68,7 @@ export function PrivacyPage() {
                 <span>Contact & Residential Details</span>
               </div>
               <p className="text-sm font-body text-mahogany-muted leading-relaxed">
-                Primary mobile number (used for secure OTP authentication), secondary phone, verified email address, residential address, district, state, and pincode.
+                Primary mobile number (used for secure login), secondary phone, verified email address, residential address, district, state, and pincode.
               </p>
             </Card>
 

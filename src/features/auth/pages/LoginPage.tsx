@@ -31,14 +31,13 @@ export function LoginPage() {
     resolver: zodResolver(loginSchema),
   })
 
-  const { setToken, setUser } = useAuthStore()
+  const { setTokens, setUser } = useAuthStore()
 
   const onSubmit = async (data: LoginForm) => {
     try {
       const response = await authApi.login(data.memberId, data.password)
       
-      // OTP Bypassed: We receive accessToken directly
-      setToken(response.accessToken)
+      setTokens(response.accessToken, response.refreshToken)
       
       // Fetch user profile immediately
       const userProfile = await authApi.getMe()
@@ -55,8 +54,15 @@ export function LoginPage() {
         mobile: userProfile.mobile || '',
         email: userProfile.email,
         role,
+        isFirstLogin: userProfile.isFirstLogin === true,
       })
       
+      if (userProfile.isFirstLogin === true) {
+        toast.success('Please set a new password to continue.')
+        navigate('/change-password', { replace: true })
+        return
+      }
+
       toast.success('Logged in successfully!')
       
       const from = location.state?.from || (userType === 'ADMIN' ? '/admin' : '/dashboard')
@@ -148,15 +154,6 @@ export function LoginPage() {
               Login
             </Button>
           </form>
-
-          <div className="mt-8 pt-6 border-t border-ledger-rule flex flex-col items-center gap-4">
-            <Link
-              to="/forgot-password"
-              className="text-sm font-body font-medium text-warm-gold hover:text-warm-gold-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-warm-gold rounded-sm transition-colors"
-            >
-              Forgot Password?
-            </Link>
-          </div>
         </div>
       </div>
     </div>

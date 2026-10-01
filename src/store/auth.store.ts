@@ -10,15 +10,19 @@ export interface AuthUser {
   mobile: string
   email?: string
   role: UserRole
+  /** True while the account still has the society-issued initial password. */
+  isFirstLogin?: boolean
 }
 
 interface AuthState {
   user: AuthUser | null
   token: string | null
+  refreshToken: string | null
   isAuthenticated: boolean
   isLoading: boolean
   setUser: (user: AuthUser) => void
   setToken: (token: string) => void
+  setTokens: (token: string, refreshToken?: string | null) => void
   clearUser: () => void
   setLoading: (loading: boolean) => void
 }
@@ -28,6 +32,7 @@ export const useAuthStore = create<AuthState>()(
     (set) => ({
       user: null,
       token: null,
+      refreshToken: null,
       isAuthenticated: false,
       isLoading: false, // Changed to false by default since persist rehydrates it
 
@@ -35,7 +40,11 @@ export const useAuthStore = create<AuthState>()(
 
       setToken: (token) => set({ token }),
 
-      clearUser: () => set({ user: null, token: null, isAuthenticated: false, isLoading: false }),
+      setTokens: (token, refreshToken) =>
+        set((state) => ({ token, refreshToken: refreshToken ?? state.refreshToken })),
+
+      clearUser: () =>
+        set({ user: null, token: null, refreshToken: null, isAuthenticated: false, isLoading: false }),
 
       setLoading: (loading) => set({ isLoading: loading }),
     }),

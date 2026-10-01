@@ -17,6 +17,7 @@ import {
   Building2,
 } from 'lucide-react'
 import { useAuthStore } from '@/store/auth.store'
+import { signOut } from '@/api/auth'
 import { useLanguageStore } from '@/store/language.store'
 import { translations } from '@/lib/i18n/translations'
 import { LanguageSwitcher } from '@/components/ui/LanguageSwitcher'
@@ -24,7 +25,7 @@ import { Badge } from '@/components/ui/Badge'
 import { cn } from '@/lib/utils'
 
 export function AdminLayout() {
-  const { user, clearUser } = useAuthStore()
+  const { user } = useAuthStore()
   const { language } = useLanguageStore()
   const t = translations[language]
   const navigate = useNavigate()
@@ -35,8 +36,8 @@ export function AdminLayout() {
   const [hasNewNotifs, setHasNewNotifs] = useState(true)
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
 
-  const handleLogout = () => {
-    clearUser()
+  const handleLogout = async () => {
+    await signOut()
     navigate('/login')
   }
 

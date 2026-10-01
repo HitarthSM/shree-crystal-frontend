@@ -4,6 +4,7 @@ import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom'
 import { PublicLayout } from './components/layout/PublicLayout'
 import { MemberLayout } from './components/layout/MemberLayout'
 import { AdminLayout } from './components/layout/AdminLayout'
+import { ChangePasswordPage } from './features/auth/pages/ChangePasswordPage'
 import { RequireAuth } from './components/layout/RequireAuth'
 
 // Pages - Public & Auth
@@ -11,8 +12,6 @@ import { LandingPage } from './features/public/pages/LandingPage'
 
 import { PublicNotices } from './features/public/pages/PublicNotices'
 import { LoginPage } from './features/auth/pages/LoginPage'
-// import { OTPLogin } from './features/auth/pages/OTPLogin'
-import { ForgotPassword } from './features/auth/pages/ForgotPassword'
 import { AboutPage } from './features/public/pages/AboutPage'
 import { ContactPage } from './features/public/pages/ContactPage'
 import { PrivacyPage } from './features/public/pages/PrivacyPage'
@@ -48,9 +47,6 @@ const router = createBrowserRouter([
     children: [
       { index: true, element: <LandingPage /> },
       { path: 'login', element: <LoginPage /> },
-      // OTP bypassed for easy access: redirect any direct OTP visits to login
-      { path: 'login/otp', element: <Navigate to="/login" replace /> },
-      { path: 'forgot-password', element: <ForgotPassword /> },
       { path: 'about', element: <AboutPage /> },
       { path: 'notices', element: <PublicNotices /> },
       { path: 'contact', element: <ContactPage /> },
@@ -59,6 +55,13 @@ const router = createBrowserRouter([
     ],
   },
   
+  // Forced password change (reachable while isFirstLogin is set)
+  {
+    path: '/change-password',
+    element: <RequireAuth allowFirstLogin />,
+    children: [{ index: true, element: <ChangePasswordPage /> }],
+  },
+
   // Member Routes
   {
     path: '/dashboard',
