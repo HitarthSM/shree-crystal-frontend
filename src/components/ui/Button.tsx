@@ -1,6 +1,7 @@
 import { cva, type VariantProps } from 'class-variance-authority'
 import { Loader2 } from 'lucide-react'
 import { forwardRef } from 'react'
+import { Link as RouterLink } from 'react-router-dom'
 import { cn } from '@/lib/utils'
 
 const buttonVariants = cva(
@@ -94,5 +95,31 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
 )
 Button.displayName = 'Button'
 
+export interface LinkButtonProps
+  extends React.AnchorHTMLAttributes<HTMLAnchorElement>,
+    VariantProps<typeof buttonVariants> {
+  to: string
+  leftIcon?: React.ReactNode
+  rightIcon?: React.ReactNode
+}
+
+const LinkButton = forwardRef<HTMLAnchorElement, LinkButtonProps>(
+  ({ className, variant, size, fullWidth, leftIcon, rightIcon, children, to, ...props }, ref) => {
+    return (
+      <RouterLink
+        ref={ref}
+        to={to}
+        className={cn(buttonVariants({ variant, size, fullWidth, className }))}
+        {...props}
+      >
+        {leftIcon && <span aria-hidden="true">{leftIcon}</span>}
+        {children}
+        {rightIcon && <span aria-hidden="true">{rightIcon}</span>}
+      </RouterLink>
+    )
+  },
+)
+LinkButton.displayName = 'LinkButton'
+
 // eslint-disable-next-line react-refresh/only-export-components
-export { Button, buttonVariants }
+export { Button, LinkButton, buttonVariants }

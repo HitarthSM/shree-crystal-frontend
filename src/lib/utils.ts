@@ -56,3 +56,15 @@ export function maskAadhaar(aadhaar: string): string {
 export function maskPAN(pan: string): string {
   return pan.replace(/^(.{2})(.{3})(.{4})(.{1})$/, '$1XXX$3$4')
 }
+
+/** Trigger browser download for a Blob */
+export function downloadBlob(blob: Blob, filename: string): void {
+  const url = window.URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  window.URL.revokeObjectURL(url)
+}

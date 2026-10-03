@@ -1,22 +1,31 @@
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
-import { FileText } from 'lucide-react'
+import { PageHeader } from '@/components/ui/PageHeader'
+import { EmptyState } from '@/components/ui/EmptyState'
+import { SkeletonRow } from '@/components/ui/Skeleton'
 import { useQuery } from '@tanstack/react-query'
 import apiClient from '@/api/client'
-import { format } from 'date-fns'
+import { formatDate } from '@/lib/utils'
+import type { Notice } from '@/types/notice'
+
+interface MemberNoticeDelivery {
+  id: string
+  status: string
+  notice: Notice
+}
 
 export function MemberNotices() {
-  const { data: notices, isLoading } = useQuery({ queryKey: ['memberNotices'], queryFn: () => apiClient.get('/notices/me').then(r => r.data) })
+  const { data: notices, isLoading } = useQuery<MemberNoticeDelivery[]>({
+    queryKey: ['memberNotices'],
+    queryFn: () => apiClient.get('/notices/me').then(r => r.data)
+  })
+
   return (
     <div className="space-y-8 animate-fade-slide-up">
-      <header>
-        <h1 className="text-display-md font-display text-dark-mahogany mb-1">
-          Notices & Circulars
-        </h1>
-        <p className="text-body text-mahogany-muted">
-          Important updates and announcements from the society.
-        </p>
-      </header>
+      <PageHeader
+        title="Notices & Circulars"
+        description="Important updates and announcements from the society."
+      />
 
       <Card padding="none">
         <CardHeader className="p-6 pb-4 border-b border-ledger-rule">
@@ -24,14 +33,18 @@ export function MemberNotices() {
         </CardHeader>
         <CardContent className="p-0">
           {isLoading ? (
-            <div className="p-8 text-center text-mahogany-muted font-body">Loading notices...</div>
+            <div className="p-4 space-y-2">
+              <SkeletonRow />
+              <SkeletonRow />
+              <SkeletonRow />
+            </div>
           ) : notices && notices.length > 0 ? (
             <div className="divide-y divide-ledger-rule">
-              {notices.map((delivery: any) => (
+              {notices.map((delivery) => (
                 <div key={delivery.id} className={`p-6 transition-colors ${delivery.status !== 'DELIVERED' ? 'bg-deep-saffron/5' : ''}`}>
                   <div className="flex items-start justify-between gap-4 mb-2">
                     <div className="flex items-center gap-3">
-                      <Badge variant={delivery.notice.priority === 'HIGH' ? 'urgent' : delivery.notice.category === 'AGM' ? 'agm' : 'general'}>
+                      <Badge variant={delivery.notice.priority === 'HIGH' ? 'urgent' : delivery.notice.category}>
                         {delivery.notice.priority === 'HIGH' ? 'URGENT' : delivery.notice.category || 'GENERAL'}
                       </Badge>
                       <h3 className="font-body font-medium text-dark-mahogany text-lg">
@@ -39,30 +52,22 @@ export function MemberNotices() {
                       </h3>
                     </div>
                     <span className="font-data text-sm text-mahogany-muted whitespace-nowrap">
-                      {format(new Date(delivery.notice.publishedAt || delivery.notice.createdAt), 'dd MMM yyyy')}
+                      {delivery.notice.publishedAt || delivery.notice.createdAt ? formatDate(delivery.notice.publishedAt || delivery.notice.createdAt) : ''}
                     </span>
                   </div>
                   <p className="font-body text-mahogany-muted mb-4 max-w-3xl">
-                    {delivery.notice.content || delivery.notice.body}
+                    {delivery.notice.body}
                   </p>
-                  {delivery.notice.attachmentUrl && (
-                    <a 
-                      href={delivery.notice.attachmentUrl} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 text-sm font-medium text-warm-gold hover:text-warm-gold-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-warm-gold rounded-sm transition-colors"
-                    >
-                      <FileText className="h-4 w-4" />
-                      View Full Circular
-                    </a>
-                  )}
                 </div>
               ))}
             </div>
           ) : (
-            <div className="p-8 text-center text-mahogany-muted font-body">
-              No notices available.
-            </div>
+            <EmptyState
+              title="No notices found"
+              description="No notices have been published to your member account at this time."
+              icon="inbox"
+              className="m-6"
+            />
           )}
         </CardContent>
       </Card>

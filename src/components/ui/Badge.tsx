@@ -1,28 +1,53 @@
 import { cn } from '@/lib/utils'
 
-type BadgeVariant = 'active' | 'published' | 'resolved' | 'pending' | 'urgent' | 'suspended' | 'general' | 'agm' | 'circular'
+export type BadgeVariant =
+  | 'active'
+  | 'published'
+  | 'resolved'
+  | 'pending'
+  | 'urgent'
+  | 'suspended'
+  | 'general'
+  | 'agm'
+  | 'circular'
+  | 'open'
+  | 'closed'
+  | 'inactive'
+  | 'success'
+  | 'failed'
+  | 'withdrawn'
+  | (string & {})
 
-interface BadgeProps {
+export interface BadgeProps {
   variant: BadgeVariant
   children: React.ReactNode
   className?: string
 }
 
-const variantMap: Record<BadgeVariant, string> = {
-  active:    'badge badge--active',
-  published: 'badge badge--published',
-  resolved:  'badge badge--resolved',
-  pending:   'badge badge--pending',
-  urgent:    'badge badge--urgent',
-  suspended: 'badge badge--suspended',
-  general:   'badge badge--general',
-  agm:       'badge badge--agm',
-  circular:  'badge badge--general',
+const variantMap: Record<string, string> = {
+  active:      'badge badge--active',
+  published:   'badge badge--published',
+  resolved:    'badge badge--resolved',
+  pending:     'badge badge--pending',
+  open:        'badge badge--pending',
+  urgent:      'badge badge--urgent',
+  suspended:   'badge badge--suspended',
+  inactive:    'badge badge--suspended',
+  general:     'badge badge--general',
+  agm:         'badge badge--agm',
+  circular:    'badge badge--general',
+  success:     'badge badge--active',
+  failed:      'badge badge--urgent',
+  withdrawn:   'badge badge--suspended',
+  closed:      'badge badge--resolved',
 }
 
 export function Badge({ variant, children, className }: BadgeProps) {
+  const normalizedVariant = typeof variant === 'string' ? variant.toLowerCase() : 'general'
+  const badgeClass = variantMap[normalizedVariant] || 'badge badge--general'
+
   return (
-    <span className={cn(variantMap[variant], className)}>
+    <span className={cn(badgeClass, className)}>
       {children}
     </span>
   )

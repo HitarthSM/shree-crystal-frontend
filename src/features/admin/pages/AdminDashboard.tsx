@@ -1,7 +1,11 @@
+import { useState } from 'react'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 import { LedgerRow } from '@/components/ui/LedgerRow'
 import { Badge, StatusDot } from '@/components/ui/Badge'
-import { Button } from '@/components/ui/Button'
+import { LinkButton } from '@/components/ui/Button'
+import { PageHeader } from '@/components/ui/PageHeader'
+import { ConfirmModal, PromptModal } from '@/components/ui/Modal'
+import { SkeletonRow } from '@/components/ui/Skeleton'
 import { formatINR } from '@/lib/utils'
 import { 
   Users, 
@@ -15,10 +19,24 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import apiClient from '@/api/client'
 import { toast } from '@/components/ui/Toast'
 import { formatDistanceToNow } from 'date-fns'
+import type { AdminDashboardData, PendingApproval } from '@/types/dashboard'
+
+interface AxiosErrorResponse {
+  response?: {
+    data?: {
+      message?: string
+    }
+  }
+}
 
 export function AdminDashboard() {
   const queryClient = useQueryClient()
-  const { data, isLoading } = useQuery({
+  
+  // Modal state for Approval and Rejection
+  const [approveItem, setApproveItem] = useState<{ id: string; actionType: string } | null>(null)
+  const [rejectItem, setRejectItem] = useState<{ id: string; actionType: string } | null>(null)
+
+  const { data, isLoading } = useQuery<AdminDashboardData>({
     queryKey: ['adminDashboard'],
     queryFn: () => apiClient.get('/dashboard/admin').then(res => res.data)
   })
@@ -27,9 +45,10 @@ export function AdminDashboard() {
     mutationFn: (id: string) => apiClient.post(`/pending-actions/${id}/approve`),
     onSuccess: () => {
       toast.success('Action approved successfully')
+      setApproveItem(null)
       queryClient.invalidateQueries({ queryKey: ['adminDashboard'] })
     },
-    onError: (err: any) => {
+    onError: (err: AxiosErrorResponse) => {
       toast.error(err.response?.data?.message || 'Failed to approve action')
     }
   })
@@ -39,29 +58,24 @@ export function AdminDashboard() {
       apiClient.post(`/pending-actions/${id}/reject`, { reason }),
     onSuccess: () => {
       toast.success('Action rejected')
+      setRejectItem(null)
       queryClient.invalidateQueries({ queryKey: ['adminDashboard'] })
     },
-    onError: (err: any) => {
+    onError: (err: AxiosErrorResponse) => {
       toast.error(err.response?.data?.message || 'Failed to reject action')
     }
   })
 
-  const handleApprove = (id: string, actionType: string) => {
-    const formatted = actionType ? actionType.replace(/_/g, ' ') : 'request'
-    if (window.confirm(`Are you sure you want to approve this ${formatted}?`)) {
-      approveMutation.mutate(id)
+  const handleConfirmApprove = () => {
+    if (approveItem) {
+      approveMutation.mutate(approveItem.id)
     }
   }
 
-  const handleReject = (id: string, actionType: string) => {
-    const formatted = actionType ? actionType.replace(/_/g, ' ') : 'request'
-    const reason = window.prompt(`Please enter the reason for rejecting this ${formatted}:`)
-    if (reason === null) return
-    if (!reason.trim()) {
-      toast.error('A rejection reason is required.')
-      return
+  const handleConfirmReject = (reason: string) => {
+    if (rejectItem) {
+      rejectMutation.mutate({ id: rejectItem.id, reason })
     }
-    rejectMutation.mutate({ id, reason: reason.trim() })
   }
 
   const stats = [
@@ -76,37 +90,35 @@ export function AdminDashboard() {
 
   return (
     <div className="space-y-8 animate-fade-slide-up">
-      <header className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-        <div>
-          <h1 className="text-display-md font-display text-dark-mahogany mb-1">
-            Admin Dashboard
-          </h1>
-          <p className="text-body text-mahogany-muted">
-            Society overview and day-to-day administrative tasks.
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <StatusDot status="ok" label="All Systems Working" />
-        </div>
-      </header>
+      <PageHeader
+        title="Admin Dashboard"
+        description="Society overview and day-to-day administrative tasks."
+        actions={<StatusDot status="ok" label="All Systems Working" />}
+      />
 
-      {/* Quick Actions Row */}
+      {/* Quick Actions Row using semantic LinkButton */}
       <div className="flex flex-wrap gap-4">
-        <Link to="/admin/members/add">
-          <Button variant="primary" leftIcon={<Users className="h-4 w-4" />}>
-            Add Member
-          </Button>
-        </Link>
-        <Link to="/admin/statements">
-          <Button variant="secondary" leftIcon={<FileText className="h-4 w-4" />}>
-            Upload Statements
-          </Button>
-        </Link>
-        <Link to="/admin/notices">
-          <Button variant="secondary" leftIcon={<AlertCircle className="h-4 w-4" />}>
-            Post Notice
-          </Button>
-        </Link>
+        <LinkButton
+          to="/admin/members/add"
+          variant="primary"
+          leftIcon={<Users className="h-4 w-4" />}
+        >
+          Add Member
+        </LinkButton>
+        <LinkButton
+          to="/admin/statements"
+          variant="secondary"
+          leftIcon={<FileText className="h-4 w-4" />}
+        >
+          Upload Statements
+        </LinkButton>
+        <LinkButton
+          to="/admin/notices"
+          variant="secondary"
+          leftIcon={<AlertCircle className="h-4 w-4" />}
+        >
+          Post Notice
+        </LinkButton>
       </div>
 
       {/* Stats Grid */}
@@ -121,7 +133,6 @@ export function AdminDashboard() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        
         {/* Pending Approvals */}
         <Card padding="none" className="border-deep-crimson/20 shadow-paper-md">
           <CardHeader className="p-6 pb-4 border-b border-ledger-rule flex justify-between items-center bg-deep-crimson/5 rounded-t-[6px]">
@@ -134,36 +145,39 @@ export function AdminDashboard() {
           <CardContent className="p-0">
             <div className="divide-y divide-ledger-rule">
               {isLoading ? (
-                <div className="p-6 text-center text-mahogany-muted text-sm font-body">Loading...</div>
+                <div className="p-4 space-y-2">
+                  <SkeletonRow />
+                  <SkeletonRow />
+                </div>
               ) : pendingApprovals.length === 0 ? (
                 <div className="p-6 text-center text-mahogany-muted text-sm font-body">
                   All caught up! There are no pending requests right now.
                 </div>
               ) : (
-                pendingApprovals.map((item: any) => (
+                pendingApprovals.map((item: PendingApproval) => (
                   <LedgerRow
                     key={item.id}
                     title={item.actionType ? item.actionType.replace(/_/g, ' ') : 'Pending Request'}
-                    subtitle={`Status: ${item.status}`}
+                    subtitle={item.requestedBy?.fullName ? `By: ${item.requestedBy.fullName}` : `ID: ${item.id.slice(0, 8)}`}
                     date={formatDistanceToNow(new Date(item.createdAt), { addSuffix: true })}
                     className="px-6 py-4"
                     mono={
                       <div className="flex items-center gap-1 mt-1">
                         <button 
-                          onClick={() => handleApprove(item.id, item.actionType)}
+                          onClick={() => setApproveItem({ id: item.id, actionType: item.actionType })}
                           disabled={approveMutation.isPending || rejectMutation.isPending}
                           title="Approve Action"
                           aria-label="Approve Action"
-                          className="min-h-[44px] min-w-[44px] p-2 text-verdant-green hover:bg-verdant-green/10 rounded-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-verdant-green disabled:opacity-50 flex items-center justify-center"
+                          className="min-h-[44px] min-w-[44px] p-2 text-verdant-green hover:bg-verdant-green/10 rounded-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-verdant-green disabled:opacity-50 flex items-center justify-center cursor-pointer"
                         >
                           <CheckCircle2 className="h-5 w-5" />
                         </button>
                         <button 
-                          onClick={() => handleReject(item.id, item.actionType)}
+                          onClick={() => setRejectItem({ id: item.id, actionType: item.actionType })}
                           disabled={approveMutation.isPending || rejectMutation.isPending}
                           title="Reject Action"
                           aria-label="Reject Action"
-                          className="min-h-[44px] min-w-[44px] p-2 text-deep-crimson hover:bg-deep-crimson/10 rounded-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-deep-crimson disabled:opacity-50 flex items-center justify-center"
+                          className="min-h-[44px] min-w-[44px] p-2 text-deep-crimson hover:bg-deep-crimson/10 rounded-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-deep-crimson disabled:opacity-50 flex items-center justify-center cursor-pointer"
                         >
                           <XCircle className="h-5 w-5" />
                         </button>
@@ -187,13 +201,16 @@ export function AdminDashboard() {
           <CardContent className="p-0">
             <div className="divide-y divide-ledger-rule">
               {isLoading ? (
-                <div className="p-6 text-center text-mahogany-muted text-sm font-body">Loading...</div>
+                <div className="p-4 space-y-2">
+                  <SkeletonRow />
+                  <SkeletonRow />
+                </div>
               ) : recentActivity.length === 0 ? (
                 <div className="p-6 text-center text-mahogany-muted text-sm font-body">
                   No recent activity recorded yet.
                 </div>
               ) : (
-                recentActivity.map((log: any) => (
+                recentActivity.map((log) => (
                   <LedgerRow
                     key={log.id}
                     stamped
@@ -207,8 +224,30 @@ export function AdminDashboard() {
             </div>
           </CardContent>
         </Card>
-
       </div>
+
+      {/* Accessible Approval Confirmation Modal */}
+      <ConfirmModal
+        isOpen={!!approveItem}
+        onClose={() => setApproveItem(null)}
+        onConfirm={handleConfirmApprove}
+        title="Approve Request"
+        message={`Are you sure you want to approve this ${approveItem?.actionType?.replace(/_/g, ' ') || 'action'}?`}
+        confirmText="Approve"
+        isLoading={approveMutation.isPending}
+      />
+
+      {/* Accessible Rejection Reason Prompt Modal */}
+      <PromptModal
+        isOpen={!!rejectItem}
+        onClose={() => setRejectItem(null)}
+        onSubmit={handleConfirmReject}
+        title="Reject Request"
+        message={`Please provide a reason for rejecting this ${rejectItem?.actionType?.replace(/_/g, ' ') || 'action'}:`}
+        placeholder="Enter rejection reason here..."
+        submitText="Reject Request"
+        isLoading={rejectMutation.isPending}
+      />
     </div>
   )
 }

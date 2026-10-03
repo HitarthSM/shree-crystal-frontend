@@ -17,9 +17,19 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import apiClient from '@/api/client'
 import { format, formatDistanceToNow } from 'date-fns'
 
+import { PageHeader } from '@/components/ui/PageHeader'
+
 interface BackupStatus {
   lastBackupTimestamp?: string
   status?: 'SUCCESS' | 'FAILED' | 'IN_PROGRESS' | 'PENDING'
+}
+
+interface AxiosErrorResponse {
+  response?: {
+    data?: {
+      message?: string
+    }
+  }
 }
 
 export function AdminBackup() {
@@ -37,8 +47,9 @@ export function AdminBackup() {
       toast.success('Database backup completed and encrypted snapshot stored successfully.')
       queryClient.invalidateQueries({ queryKey: ['adminBackupStatus'] })
     },
-    onError: (err: any) => {
-      toast.error(err.response?.data?.message || 'Database backup execution failed. Please check server logs.')
+    onError: (err: unknown) => {
+      const error = err as AxiosErrorResponse
+      toast.error(error.response?.data?.message || 'Database backup execution failed. Please check server logs.')
     },
   })
 
@@ -55,30 +66,26 @@ export function AdminBackup() {
 
   return (
     <div className="space-y-8 animate-fade-slide-up max-w-5xl">
-      <header className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-        <div>
-          <h1 className="text-display-md font-display text-dark-mahogany mb-1">
-            Database Backup & Disaster Recovery
-          </h1>
-          <p className="text-body text-mahogany-muted">
-            Manage encrypted database snapshots, automated retention rules, and disaster recovery procedures.
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <StatusDot 
-            status={isSuccess ? 'ok' : isFailed ? 'error' : 'warning'} 
-            label={isSuccess ? 'Backups Healthy' : isFailed ? 'Backup Warning' : 'System Ready'} 
-          />
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={() => refetch()} 
-            leftIcon={<RefreshCw className="h-4 w-4" />}
-          >
-            Refresh Status
-          </Button>
-        </div>
-      </header>
+      <PageHeader
+        title="Database Backup & Disaster Recovery"
+        description="Manage encrypted database snapshots, automated retention rules, and disaster recovery procedures."
+        actions={
+          <div className="flex items-center gap-3">
+            <StatusDot 
+              status={isSuccess ? 'ok' : isFailed ? 'error' : 'warning'} 
+              label={isSuccess ? 'Backups Healthy' : isFailed ? 'Backup Warning' : 'System Ready'} 
+            />
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => refetch()} 
+              leftIcon={<RefreshCw className="h-4 w-4" />}
+            >
+              Refresh Status
+            </Button>
+          </div>
+        }
+      />
 
       {/* Overview Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

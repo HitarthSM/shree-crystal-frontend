@@ -4,36 +4,66 @@ import { LedgerRow } from '@/components/ui/LedgerRow'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { Select, Input } from '@/components/ui/FormControls'
-import { Upload, Filter, CheckCircle2 } from 'lucide-react'
+import { PageHeader } from '@/components/ui/PageHeader'
+import { Stepper } from '@/components/ui/Stepper'
+import { SkeletonRow } from '@/components/ui/Skeleton'
+import { Upload, CheckCircle2 } from 'lucide-react'
 import { toast } from '@/components/ui/Toast'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import apiClient from '@/api/client'
+import { formatDate } from '@/lib/utils'
+
+interface BatchValidationState {
+  batchId?: string
+  matchedCount?: number
+  unmatchedList?: string[]
+}
+
+interface BatchRecord {
+  id: string
+  period: string
+  category: string
+  matchedCount?: number
+  status: string
+  createdAt: string
+}
+
+interface AxiosErrorResponse {
+  response?: {
+    data?: {
+      message?: string
+    }
+  }
+}
 
 export function AdminStatements() {
   const [filter, setFilter] = useState('all')
   const [period, setPeriod] = useState('')
-  const [category, setCategory] = useState('Savings')
+  const [category, setCategory] = useState<'Savings' | 'Loan'>('Savings')
   const [step, setStep] = useState<1 | 2>(1)
-  const [batchState, setBatchState] = useState<any>(null)
+  const [batchState, setBatchState] = useState<BatchValidationState | null>(null)
 
   const fileInputRef = useRef<HTMLInputElement>(null)
   
   const queryClient = useQueryClient()
-  const { data: batchesData, isLoading } = useQuery({
+  const { data: batchesData, isLoading } = useQuery<{ data?: BatchRecord[] } | BatchRecord[]>({
     queryKey: ['batches', filter],
     queryFn: () => apiClient.get('/statements/batches', { params: filter !== 'all' ? { status: filter.toUpperCase() } : undefined }).then(res => res.data)
   })
-  const batches = batchesData?.data || []
+  const batches: BatchRecord[] = Array.isArray(batchesData)
+    ? batchesData
+    : batchesData?.data || []
 
   const uploadBatch = useMutation({
-    mutationFn: ({ period, category, file }: any) => {
+    mutationFn: ({ periodVal, categoryVal, file }: { periodVal: string; categoryVal: string; file: File }) => {
       const formData = new FormData()
-      formData.append('period', period)
-      formData.append('category', category)
+      formData.append('period', periodVal)
+      formData.append('category', categoryVal)
       formData.append('files', file)
       return apiClient.post('/statements/batch', formData, { headers: { 'Content-Type': 'multipart/form-data' } }).then(res => res.data)
     }
   })
+
   const publishBatch = useMutation({
     mutationFn: (batchId: string) => apiClient.post(`/statements/batch/${batchId}/publish`).then(res => res.data),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['batches'] })
@@ -47,11 +77,12 @@ export function AdminStatements() {
     }
 
     try {
-      const response = await uploadBatch.mutateAsync({ period, category, file })
+      const response = await uploadBatch.mutateAsync({ periodVal: period, categoryVal: category, file })
       setBatchState(response)
       setStep(2)
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Failed to upload batch.')
+    } catch (err: unknown) {
+      const error = err as AxiosErrorResponse
+      toast.error(error.response?.data?.message || 'Failed to upload batch.')
     }
   }
 
@@ -63,23 +94,26 @@ export function AdminStatements() {
       setStep(1)
       setBatchState(null)
       setPeriod('')
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Failed to publish batch.')
+    } catch (err: unknown) {
+      const error = err as AxiosErrorResponse
+      toast.error(error.response?.data?.message || 'Failed to publish batch.')
     }
   }
 
   return (
     <div className="space-y-8 animate-fade-slide-up">
-      <header className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-        <div>
-          <h1 className="text-display-md font-display text-dark-mahogany mb-1">
-            Statements Management
-          </h1>
-          <p className="text-body text-mahogany-muted">
-            Upload and publish monthly member statements.
-          </p>
-        </div>
-      </header>
+      <PageHeader
+        title="Statements Management"
+        description="Upload and publish monthly member statements."
+      />
+
+      <Stepper
+        steps={[
+          { id: 1, title: 'Upload Files', description: 'Select period, type & PDF bundle' },
+          { id: 2, title: 'Verify & Publish', description: 'Confirm member matches' },
+        ]}
+        currentStep={step}
+      />
 
       {/* Upload Zone */}
       <Card padding="lg" className="border-2 border-ledger-rule bg-white">
@@ -96,7 +130,7 @@ export function AdminStatements() {
               <Select 
                 label="Category" 
                 value={category} 
-                onChange={(e) => setCategory(e.target.value)} 
+                onChange={(e) => setCategory(e.target.value as 'Savings' | 'Loan')} 
                 options={[{value: 'Savings', label: 'Savings'}, {value: 'Loan', label: 'Loan'}]} 
               />
             </div>
@@ -150,7 +184,7 @@ export function AdminStatements() {
       <Card padding="none">
         <CardHeader className="p-6 pb-4 border-b border-ledger-rule flex flex-col md:flex-row justify-between md:items-center gap-4">
           <CardTitle>Batch History</CardTitle>
-          <div className="flex items-center gap-3">
+          <div className="w-44">
             <Select
               label=""
               aria-label="Filter batches"
@@ -161,28 +195,28 @@ export function AdminStatements() {
                 { value: 'published', label: 'Published' },
                 { value: 'draft', label: 'Drafts' },
               ]}
-              className="w-40"
             />
-            <Button variant="ghost" size="icon">
-              <Filter className="h-4 w-4" />
-            </Button>
           </div>
         </CardHeader>
         
         <CardContent className="p-0">
           <div className="divide-y divide-ledger-rule">
             {isLoading ? (
-              <div className="p-8 text-center text-mahogany-muted font-body">Loading history...</div>
+              <div className="p-4 space-y-2">
+                <SkeletonRow />
+                <SkeletonRow />
+                <SkeletonRow />
+              </div>
             ) : batches.length === 0 ? (
               <div className="p-8 text-center text-mahogany-muted font-body">No batch history found.</div>
             ) : (
-              batches.map((batch: any) => (
+              batches.map((batch) => (
                 <LedgerRow
                   key={batch.id}
                   stamped={batch.status === 'PUBLISHED'}
                   title={`Statement Batch: ${batch.period} (${batch.category})`}
-                  subtitle={`Contains ${batch.matchedCount} member statements`}
-                  date={new Date(batch.createdAt).toLocaleDateString()}
+                  subtitle={`Contains ${batch.matchedCount || 0} member statements`}
+                  date={batch.createdAt ? formatDate(batch.createdAt) : ''}
                   className="px-6 py-4"
                   badge={<Badge variant={batch.status === 'PUBLISHED' ? 'published' : 'pending'}>{batch.status}</Badge>}
                   mono={

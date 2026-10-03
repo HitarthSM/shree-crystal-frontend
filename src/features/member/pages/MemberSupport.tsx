@@ -4,32 +4,60 @@ import { LedgerRow } from '@/components/ui/LedgerRow'
 import { Badge } from '@/components/ui/Badge'
 import { Select, Textarea, Input } from '@/components/ui/FormControls'
 import { Button } from '@/components/ui/Button'
-import { Send, CheckCircle2, MessageSquare, X, PlusCircle, RefreshCw } from 'lucide-react'
+import { PageHeader } from '@/components/ui/PageHeader'
+import { QueryChatThread } from '@/components/ui/QueryChatThread'
+import { SkeletonRow } from '@/components/ui/Skeleton'
+import { MessageSquare, PlusCircle } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import apiClient from '@/api/client'
-import { formatDistanceToNow, format } from 'date-fns'
+import { formatDistanceToNow } from 'date-fns'
 import { toast } from '@/components/ui/Toast'
+import type { SupportQuery } from '@/types/query'
 
 export function MemberSupport() {
   const [filterStatus, setFilterStatus] = useState<string>('OPEN')
   const [selectedQueryId, setSelectedQueryId] = useState<string | null>(null)
   const [isCreatingNew, setIsCreatingNew] = useState(false)
+  const queryClient = useQueryClient()
 
-  const { data: queriesData, isLoading } = useQuery({ queryKey: ['memberQueries'], queryFn: () => apiClient.get('/queries/me').then(r => r.data) })
-  const queries = (queriesData || []).filter((q: any) => filterStatus === 'ALL' || q.status === filterStatus)
+  const { data: queriesData, isLoading } = useQuery<SupportQuery[]>({
+    queryKey: ['memberQueries'],
+    queryFn: () => apiClient.get('/queries/me').then(r => r.data)
+  })
+  
+  const allQueries: SupportQuery[] = queriesData || []
+  const queries = allQueries.filter((q) => filterStatus === 'ALL' || q.status === filterStatus)
+
+  const { data: selectedQuery, isLoading: isLoadingQuery } = useQuery<SupportQuery>({
+    queryKey: ['memberQuery', selectedQueryId],
+    queryFn: () => apiClient.get(`/queries/${selectedQueryId}`).then(res => res.data),
+    enabled: !!selectedQueryId,
+  })
+
+  const replyMutation = useMutation({
+    mutationFn: ({ id, message }: { id: string; message: string }) =>
+      apiClient.post(`/queries/${id}/messages`, { message }).then(res => res.data),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['memberQuery', variables.id] })
+      queryClient.invalidateQueries({ queryKey: ['memberQueries'] })
+      toast.success('Message sent successfully')
+    },
+    onError: () => {
+      toast.error('Failed to send message')
+    }
+  })
+
+  const handleSendReply = async (message: string) => {
+    if (!selectedQueryId) return
+    await replyMutation.mutateAsync({ id: selectedQueryId, message })
+  }
 
   return (
     <div className="space-y-8 animate-fade-slide-up">
-      <header className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-        <div>
-          <h1 className="text-display-md font-display text-dark-mahogany mb-1">
-            Help & Member Inquiries
-          </h1>
-          <p className="text-body text-mahogany-muted">
-            Ask questions or send requests directly to the society office.
-          </p>
-        </div>
-      </header>
+      <PageHeader
+        title="Help & Member Inquiries"
+        description="Ask questions or send requests directly to the society office."
+      />
 
       <div className="flex flex-col md:flex-row gap-6">
         {/* Left List */}
@@ -43,15 +71,16 @@ export function MemberSupport() {
                   setSelectedQueryId(null)
                   setIsCreatingNew(true)
                 }}
+                leftIcon={<PlusCircle className="h-4 w-4" />}
               >
-                <PlusCircle className="h-4 w-4" />
                 Ask a New Question
               </Button>
               <div className="flex flex-row items-center justify-between">
                 <CardTitle>My Questions</CardTitle>
-                <div className="w-32">
+                <div className="w-36">
                   <Select
                     label=""
+                    aria-label="Filter my questions"
                     value={filterStatus}
                     onChange={(e) => setFilterStatus(e.target.value)}
                     options={[
@@ -66,26 +95,30 @@ export function MemberSupport() {
             <CardContent className="p-0 overflow-y-auto flex-1">
               <div className="divide-y divide-ledger-rule">
                 {isLoading ? (
-                  <div className="p-8 text-center text-mahogany-muted font-body">Loading questions...</div>
+                  <div className="p-4 space-y-2">
+                    <SkeletonRow />
+                    <SkeletonRow />
+                    <SkeletonRow />
+                  </div>
                 ) : queries.length === 0 ? (
                   <div className="p-8 text-center text-mahogany-muted font-body">No questions found.</div>
                 ) : (
-                  queries.map((q: any) => (
+                  queries.map((q) => (
                     <button
                       key={q.id}
                       onClick={() => {
                         setIsCreatingNew(false)
                         setSelectedQueryId(q.id)
                       }}
-                      className={`w-full text-left transition-colors focus-visible:outline-none focus-visible:bg-warm-gold/5 ${
+                      className={`w-full text-left transition-colors focus-visible:outline-none focus-visible:bg-warm-gold/5 cursor-pointer ${
                         selectedQueryId === q.id ? 'bg-warm-gold/10' : 'hover:bg-warm-gold/5'
                       }`}
                     >
                       <LedgerRow
                         title={q.subject}
-                        subtitle={formatDistanceToNow(new Date(q.updatedAt), { addSuffix: true })}
+                        subtitle={q.updatedAt ? formatDistanceToNow(new Date(q.updatedAt), { addSuffix: true }) : ''}
                         className="px-4 py-3"
-                        badge={<Badge variant={q.status === 'OPEN' ? 'pending' : 'active'}>{q.status}</Badge>}
+                        badge={<Badge variant={q.status === 'OPEN' ? 'pending' : 'resolved'}>{q.status}</Badge>}
                       />
                     </button>
                   ))
@@ -98,12 +131,27 @@ export function MemberSupport() {
         {/* Right Detail Panel */}
         <div className={`flex-1 md:flex-[1.5] ${!selectedQueryId && !isCreatingNew ? 'hidden md:block' : 'block'}`}>
           {isCreatingNew ? (
-            <NewTicketForm onCancel={() => setIsCreatingNew(false)} onSuccess={(id) => {
-              setIsCreatingNew(false)
-              setSelectedQueryId(id)
-            }} />
+            <NewTicketForm
+              onCancel={() => setIsCreatingNew(false)}
+              onSuccess={(id) => {
+                setIsCreatingNew(false)
+                setSelectedQueryId(id)
+              }}
+            />
           ) : selectedQueryId ? (
-            <QueryDetail queryId={selectedQueryId} onClose={() => setSelectedQueryId(null)} />
+            isLoadingQuery || !selectedQuery ? (
+              <Card className="h-[700px] flex items-center justify-center">
+                <div className="text-mahogany-muted font-body">Loading inquiry details...</div>
+              </Card>
+            ) : (
+              <QueryChatThread
+                query={selectedQuery}
+                currentUserRole="MEMBER"
+                onClose={() => setSelectedQueryId(null)}
+                onSendReply={handleSendReply}
+                isSending={replyMutation.isPending}
+              />
+            )
           ) : (
             <Card padding="lg" className="h-[700px] flex items-center justify-center border-dashed">
               <div className="text-center space-y-3">
@@ -118,227 +166,87 @@ export function MemberSupport() {
   )
 }
 
-function NewTicketForm({ onCancel, onSuccess }: { onCancel: () => void, onSuccess: (id: string) => void }) {
+function NewTicketForm({
+  onCancel,
+  onSuccess,
+}: {
+  onCancel: () => void
+  onSuccess: (id: string) => void
+}) {
   const [subject, setSubject] = useState('')
   const [category, setCategory] = useState('GENERAL')
   const [message, setMessage] = useState('')
   const qc = useQueryClient()
+
   const createMutation = useMutation({
-    mutationFn: (d: any) => apiClient.post('/queries', d).then(r => r.data),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['memberQueries'] })
+    mutationFn: (payload: { subject: string; category: string; message: string }) =>
+      apiClient.post('/queries', payload).then((r) => r.data),
+    onSuccess: (data) => {
+      qc.invalidateQueries({ queryKey: ['memberQueries'] })
+      toast.success('Your question has been sent to the society office.')
+      onSuccess(data.id)
+    },
+    onError: () => {
+      toast.error('Failed to submit question. Please try again.')
+    },
   })
 
-  const handleSubmit = async () => {
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
     if (!subject.trim() || !message.trim()) {
-      toast.error('Please fill in all fields')
+      toast.error('Please fill in both the subject and your message.')
       return
     }
-
-    try {
-      const formattedSubject = category && category !== 'GENERAL' ? `[${category}] ${subject.trim()}` : subject.trim()
-      const res = await createMutation.mutateAsync({
-        subject: formattedSubject,
-        message: message.trim(),
-      })
-      toast.success('Question submitted successfully')
-      onSuccess(res.id)
-    } catch {
-      toast.error('Failed to submit question')
-    }
+    createMutation.mutate({ subject: subject.trim(), category, message: message.trim() })
   }
 
   return (
-    <Card padding="none" className="h-[700px] flex flex-col relative animate-fade-in bg-white">
-      <CardHeader className="p-4 border-b border-ledger-rule flex flex-row items-center justify-between shrink-0 bg-ledger-paper rounded-t-[6px]">
-        <CardTitle className="text-lg">Ask a Question</CardTitle>
-        <button onClick={onCancel} className="p-1 text-mahogany-muted hover:text-dark-mahogany">
-          <X className="h-5 w-5" />
-        </button>
-      </CardHeader>
-      <CardContent className="p-6 flex-1 overflow-y-auto space-y-6">
-        <div>
-          <Select 
-            label="Category"
+    <Card padding="lg" className="h-[700px] flex flex-col justify-between">
+      <form onSubmit={handleSubmit} className="space-y-6 flex-1 flex flex-col justify-between">
+        <div className="space-y-4">
+          <CardHeader className="p-0 border-b border-ledger-rule pb-4">
+            <CardTitle>Ask a New Question</CardTitle>
+            <p className="text-sm font-body text-mahogany-muted mt-1">
+              Send your inquiry to the office. You will receive a response within 24 hours.
+            </p>
+          </CardHeader>
+          <Input
+            label="Subject"
+            placeholder="e.g. Inquiry regarding loan interest"
+            value={subject}
+            onChange={(e) => setSubject(e.target.value)}
+            required
+          />
+          <Select
+            label="Topic Category"
             value={category}
             onChange={(e) => setCategory(e.target.value)}
             options={[
-              { value: 'GENERAL', label: 'General Inquiry' },
-              { value: 'LOAN', label: 'Loan Related' },
-              { value: 'ACCOUNT', label: 'Account / Statement' },
-              { value: 'TECHNICAL', label: 'Technical Support' }
+              { value: 'GENERAL', label: 'General Society Matters' },
+              { value: 'LOAN', label: 'Loan & EMI Inquiries' },
+              { value: 'SAVINGS', label: 'Savings & Passbook' },
+              { value: 'TECHNICAL', label: 'Website / Login Help' },
             ]}
           />
-        </div>
-        <div>
-          <Input 
-            label="Subject"
-            placeholder="Brief summary of your question..."
-            value={subject}
-            onChange={(e) => setSubject(e.target.value)}
-          />
-        </div>
-        <div>
-          <Textarea 
-            label="Message"
-            placeholder="Please describe your question or request in detail..."
-            rows={8}
+          <Textarea
+            label="Your Message"
+            placeholder="Describe your question or request clearly..."
+            rows={6}
             value={message}
             onChange={(e) => setMessage(e.target.value)}
+            required
           />
         </div>
-        <div className="pt-4 flex justify-end gap-3">
-          <Button variant="ghost" onClick={onCancel}>Cancel</Button>
-          <Button 
-            variant="primary" 
-            onClick={handleSubmit} 
-            isLoading={createMutation.isPending}
-            disabled={!subject.trim() || !message.trim()}
-          >
+
+        <div className="flex justify-end gap-3 pt-4 border-t border-ledger-rule">
+          <Button variant="ghost" type="button" onClick={onCancel}>
+            Cancel
+          </Button>
+          <Button variant="primary" type="submit" isLoading={createMutation.isPending}>
             Submit Question
           </Button>
         </div>
-      </CardContent>
-    </Card>
-  )
-}
-
-function QueryDetail({ queryId, onClose }: { queryId: string, onClose: () => void }) {
-  const qc = useQueryClient()
-  const { data: query, isLoading } = useQuery({
-    queryKey: ['memberQuery', queryId],
-    queryFn: () => apiClient.get(`/queries/me/${queryId}`).then(r => r.data),
-    enabled: !!queryId
-  })
-  const replyMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: any }) => apiClient.post(`/queries/${id}/messages`, data).then(r => r.data),
-    onSuccess: (_, v) => { qc.invalidateQueries({ queryKey: ['memberQuery', v.id] }); qc.invalidateQueries({ queryKey: ['memberQueries'] }) }
-  })
-  const reopenMutation = useMutation({
-    mutationFn: (id: string) => apiClient.post(`/queries/me/${id}/reopen`).then(r => r.data),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['memberQuery', queryId] }); qc.invalidateQueries({ queryKey: ['memberQueries'] }) }
-  })
-  const [replyText, setReplyText] = useState('')
-
-  const handleReply = async () => {
-    if (!replyText.trim()) return
-
-    try {
-      await replyMutation.mutateAsync({
-        id: queryId,
-        data: { message: replyText.trim() }
-      })
-      toast.success('Reply sent successfully')
-      setReplyText('')
-    } catch {
-      toast.error('Failed to send reply')
-    }
-  }
-
-  const handleReopen = async () => {
-    try {
-      await reopenMutation.mutateAsync(queryId)
-      toast.success('Question reopened successfully')
-    } catch {
-      toast.error('Failed to reopen question')
-    }
-  }
-
-  if (isLoading) {
-    return <Card className="h-[700px] flex items-center justify-center"><div className="text-mahogany-muted">Loading messages...</div></Card>
-  }
-
-  if (!query) {
-    return <Card className="h-[700px] flex items-center justify-center"><div className="text-deep-crimson">Question not found.</div></Card>
-  }
-
-  return (
-    <Card padding="none" className="h-[700px] flex flex-col relative animate-fade-in">
-      {/* Header */}
-      <CardHeader className="p-4 border-b border-ledger-rule flex flex-row items-start justify-between shrink-0 bg-ledger-paper rounded-t-[6px]">
-        <div>
-          <CardTitle className="text-lg leading-tight mb-1">{query.subject}</CardTitle>
-          <p className="text-sm text-mahogany-muted">
-            Request #{query.id.substring(0, 8)} • Asked {format(new Date(query.createdAt), 'dd MMM yyyy')}
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <Badge variant={query.status === 'OPEN' ? 'pending' : 'active'}>{query.status}</Badge>
-          <button onClick={onClose} className="p-1 text-mahogany-muted hover:text-dark-mahogany md:hidden">
-            <X className="h-5 w-5" />
-          </button>
-        </div>
-      </CardHeader>
-
-      {/* Messages */}
-      <CardContent className="p-6 overflow-y-auto flex-1 space-y-6 bg-white/50">
-        {query.messages?.map((msg: any) => {
-          const isMe = msg.senderType === 'MEMBER'
-          return (
-            <div key={msg.id} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
-              <div className="flex items-center gap-2 mb-1">
-                <span className="text-xs font-semibold text-dark-mahogany">
-                  {isMe ? 'Me' : 'Society Staff'}
-                </span>
-                <span className="text-[10px] text-mahogany-muted">
-                  {format(new Date(msg.createdAt), 'dd MMM HH:mm')}
-                </span>
-              </div>
-              <div 
-                className={`max-w-[85%] rounded-lg p-3 text-sm font-body shadow-sm ${
-                  isMe 
-                    ? 'bg-dark-mahogany text-ivory rounded-tr-none' 
-                    : 'bg-ivory border border-ledger-rule text-dark-mahogany rounded-tl-none'
-                }`}
-              >
-                {msg.message}
-              </div>
-            </div>
-          )
-        })}
-        {query.status === 'RESOLVED' && (
-          <div className="flex flex-col items-center justify-center py-6 gap-3">
-            <div className="bg-verdant-green/10 text-verdant-green text-xs font-semibold px-3 py-1 rounded-full flex items-center gap-1">
-              <CheckCircle2 className="h-3 w-3" />
-              Issue Resolved
-            </div>
-            <Button 
-              variant="secondary" 
-              size="sm" 
-              className="mt-2 text-xs" 
-              leftIcon={<RefreshCw className="h-3 w-3" />}
-              onClick={handleReopen}
-              isLoading={reopenMutation.isPending}
-            >
-              Reopen Question
-            </Button>
-          </div>
-        )}
-      </CardContent>
-
-      {/* Reply Box */}
-      {query.status === 'OPEN' && (
-        <div className="p-4 border-t border-ledger-rule bg-white shrink-0 rounded-b-[6px]">
-          <Textarea 
-            label=""
-            placeholder="Type your reply here..."
-            rows={3}
-            value={replyText}
-            onChange={(e) => setReplyText(e.target.value)}
-            className="mb-3"
-          />
-          <div className="flex justify-end">
-            <Button 
-              variant="primary"
-              leftIcon={<Send className="h-4 w-4" />}
-              onClick={handleReply}
-              isLoading={replyMutation.isPending}
-              disabled={!replyText.trim()}
-            >
-              Send Reply
-            </Button>
-          </div>
-        </div>
-      )}
+      </form>
     </Card>
   )
 }

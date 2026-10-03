@@ -4,8 +4,8 @@ import { Input, Select } from '@/components/ui/FormControls'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
-import { ArrowLeft, Save } from 'lucide-react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Save } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import { toast } from '@/components/ui/Toast'
 import { useMutation } from '@tanstack/react-query'
 import apiClient from '@/api/client'
@@ -35,10 +35,21 @@ const memberSchema = z.object({
 
 type MemberForm = z.infer<typeof memberSchema>
 
+import { PageHeader } from '@/components/ui/PageHeader'
+import type { CreateMemberPayload } from '@/types/member'
+
+interface AxiosErrorResponse {
+  response?: {
+    data?: {
+      message?: string
+    }
+  }
+}
+
 export function AdminMemberAdd() {
   const navigate = useNavigate()
   const createMember = useMutation({
-    mutationFn: (data: any) => apiClient.post('/members', data).then(res => res.data)
+    mutationFn: (data: CreateMemberPayload) => apiClient.post('/members', data).then(res => res.data)
   })
   
   const { register, handleSubmit, formState: { errors } } = useForm<MemberForm>({
@@ -48,37 +59,39 @@ export function AdminMemberAdd() {
   const onSubmit = async (data: MemberForm) => {
     try {
       await createMember.mutateAsync({
-        ...data,
+        fullName: data.fullName,
+        fatherOrHusbandName: data.fatherOrHusbandName || undefined,
+        gender: data.gender,
+        dob: data.dob,
+        mobile: data.mobile,
         email: data.email || undefined,
+        addressLine1: data.addressLine1,
+        addressLine2: data.addressLine2 || undefined,
+        city: data.city,
+        state: data.state,
+        pincode: data.pincode,
         pan: data.pan || undefined,
+        aadhaar: data.aadhaar,
         shareCapital: data.shareCapital || undefined,
-      } as any)
+        nomineeName: data.nomineeName || undefined,
+        nomineeRelation: data.nomineeRelation || undefined,
+        nomineeContact: data.nomineeContact || undefined,
+      })
       toast.success('The new member record has been saved successfully.')
       navigate('/admin/members')
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Failed to create member record.')
+    } catch (err: unknown) {
+      const error = err as AxiosErrorResponse
+      toast.error(error.response?.data?.message || 'Failed to create member record.')
     }
   }
 
   return (
     <div className="space-y-8 animate-fade-slide-up max-w-4xl">
-      <header className="flex flex-col gap-4">
-        <Link 
-          to="/admin/members"
-          className="inline-flex items-center gap-2 text-sm font-body text-mahogany-muted hover:text-dark-mahogany transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-warm-gold rounded-sm w-fit"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back to Directory
-        </Link>
-        <div>
-          <h1 className="text-display-md font-display text-dark-mahogany mb-1">
-            Register New Member
-          </h1>
-          <p className="text-body text-mahogany-muted">
-            Create a new society member profile and record initial share capital.
-          </p>
-        </div>
-      </header>
+      <PageHeader
+        backLink={{ to: '/admin/members', label: 'Back to Directory' }}
+        title="Register New Member"
+        description="Create a new society member profile and record initial share capital."
+      />
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         <Card padding="md">

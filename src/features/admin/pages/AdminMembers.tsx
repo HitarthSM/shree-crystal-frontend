@@ -1,116 +1,123 @@
 import { useState } from 'react'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
-import { Button } from '@/components/ui/Button'
-
+import { LinkButton } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { EmptyState } from '@/components/ui/EmptyState'
-import { UserPlus, Upload, Search, Filter } from 'lucide-react'
+import { PageHeader } from '@/components/ui/PageHeader'
+import { SearchInput } from '@/components/ui/SearchInput'
+import {
+  Table,
+  TableHead,
+  TableBody,
+  TableRow,
+  TableHeaderCell,
+  TableCell,
+} from '@/components/ui/Table'
+import { SkeletonTable } from '@/components/ui/Skeleton'
+import { UserPlus, Upload } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import apiClient from '@/api/client'
+import { formatDate } from '@/lib/utils'
+import type { Member } from '@/types/member'
 
 export function AdminMembers() {
   const [searchTerm, setSearchTerm] = useState('')
 
-  const { data, isLoading, isError } = useQuery({
+  const { data, isLoading, isError } = useQuery<{ items?: Member[]; data?: Member[] } | Member[]>({
     queryKey: ['members', { search: searchTerm }],
     queryFn: () => apiClient.get('/members', { params: { search: searchTerm } }).then(res => res.data)
   })
-  const filteredMembers = data?.items || data?.data || (Array.isArray(data) ? data : [])
+
+  const filteredMembers: Member[] = Array.isArray(data)
+    ? data
+    : data?.items || data?.data || []
 
   return (
     <div className="space-y-8 animate-fade-slide-up">
-      <header className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-        <div>
-          <h1 className="text-display-md font-display text-dark-mahogany mb-1">
-            Members Directory
-          </h1>
-          <p className="text-body text-mahogany-muted">
-            Manage member accounts, KYC, and access.
-          </p>
-        </div>
-        
-        <div className="flex gap-3">
-          <Link 
-            to="/admin/members/import" 
-            className="inline-flex items-center justify-center gap-2 font-body font-medium rounded-[4px] transition-all duration-[120ms] ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-warm-gold focus-visible:ring-offset-2 border border-dark-mahogany text-dark-mahogany hover:bg-dark-mahogany/5 active:bg-dark-mahogany/10 h-10 px-4 py-2 text-sm"
-          >
-            <Upload className="h-4 w-4" /> Import CSV
-          </Link>
-          <Link 
-            to="/admin/members/add" 
-            className="inline-flex items-center justify-center gap-2 font-body font-semibold rounded-[4px] transition-all duration-[120ms] ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-warm-gold focus-visible:ring-offset-2 bg-warm-gold text-dark-mahogany hover:bg-warm-gold-hover h-10 px-4 py-2 text-sm"
-          >
-            <UserPlus className="h-4 w-4" /> Add Member
-          </Link>
-        </div>
-      </header>
+      <PageHeader
+        title="Members Directory"
+        description="Manage member accounts, KYC, and access."
+        actions={
+          <div className="flex gap-3">
+            <LinkButton
+              to="/admin/members/import"
+              variant="secondary"
+              leftIcon={<Upload className="h-4 w-4" />}
+            >
+              Import CSV
+            </LinkButton>
+            <LinkButton
+              to="/admin/members/add"
+              variant="gold"
+              leftIcon={<UserPlus className="h-4 w-4" />}
+            >
+              Add Member
+            </LinkButton>
+          </div>
+        }
+      />
 
       <Card padding="none">
         <CardHeader className="p-6 pb-4 border-b border-ledger-rule flex flex-col md:flex-row md:items-center justify-between gap-4">
           <CardTitle>Member List</CardTitle>
-          <div className="flex items-center gap-3 w-full md:w-auto">
-            <div className="relative flex-1 md:w-64">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-mahogany-muted" />
-              <input
-                type="text"
-                placeholder="Search ID, name, or mobile..."
-                className="w-full h-10 pl-9 pr-4 rounded-[4px] border border-ledger-rule bg-white text-sm font-body focus:outline-none focus:ring-2 focus:ring-warm-gold focus:border-warm-gold"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-            <Button variant="ghost" size="icon" aria-label="Filter members">
-              <Filter className="h-4 w-4" />
-            </Button>
+          <div className="w-full md:w-72">
+            <SearchInput
+              placeholder="Search ID, name, or mobile..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              onClear={() => setSearchTerm('')}
+            />
           </div>
         </CardHeader>
         
-        <CardContent className="p-0 overflow-x-auto">
+        <CardContent className="p-0">
           {isLoading ? (
-            <div className="p-8 text-center text-mahogany-muted">Loading members...</div>
+            <SkeletonTable rows={6} />
           ) : isError ? (
-            <div className="p-8 text-center text-deep-crimson">Error loading members. Please try again.</div>
+            <div className="p-8 text-center text-deep-crimson font-body">
+              Error loading members. Please try again.
+            </div>
           ) : filteredMembers.length > 0 ? (
-            <table className="w-full text-left border-collapse min-w-[800px]">
-              <thead>
-                <tr className="bg-ivory border-b border-ledger-rule">
-                  <th className="font-data text-xs font-semibold text-mahogany-muted uppercase tracking-wider p-4 pl-6">Member ID</th>
-                  <th className="font-data text-xs font-semibold text-mahogany-muted uppercase tracking-wider p-4">Name</th>
-                  <th className="font-data text-xs font-semibold text-mahogany-muted uppercase tracking-wider p-4">Mobile</th>
-                  <th className="font-data text-xs font-semibold text-mahogany-muted uppercase tracking-wider p-4">Status</th>
-                  <th className="font-data text-xs font-semibold text-mahogany-muted uppercase tracking-wider p-4">Joined Date</th>
-                  <th className="p-4 pr-6"></th>
+            <Table>
+              <TableHead>
+                <tr>
+                  <TableHeaderCell className="pl-6">Member ID</TableHeaderCell>
+                  <TableHeaderCell>Name</TableHeaderCell>
+                  <TableHeaderCell>Mobile</TableHeaderCell>
+                  <TableHeaderCell>Status</TableHeaderCell>
+                  <TableHeaderCell>Joined Date</TableHeaderCell>
+                  <TableHeaderCell className="pr-6"><span className="sr-only">Actions</span></TableHeaderCell>
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-ledger-rule">
-                {filteredMembers.map((member: any) => (
-                  <tr key={member.id} className="hover:bg-warm-gold/5 transition-colors group">
-                    <td className="p-4 pl-6 font-data text-sm font-medium text-dark-mahogany">{member.memberId}</td>
-                    <td className="p-4 font-body text-sm text-dark-mahogany">{member.fullName}</td>
-                    <td className="p-4 font-data text-sm text-mahogany-muted">{member.mobile}</td>
-                    <td className="p-4">
-                      <Badge variant={member.status.toLowerCase() as any}>{member.status.toUpperCase()}</Badge>
-                    </td>
-                    <td className="p-4 font-data text-sm text-mahogany-muted">
-                      {new Intl.DateTimeFormat('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).format(new Date(member.membershipDate))}
-                    </td>
-                    <td className="p-4 pr-6 text-right">
+              </TableHead>
+              <TableBody>
+                {filteredMembers.map((member) => (
+                  <TableRow key={member.id}>
+                    <TableCell className="pl-6 font-data font-medium">{member.memberId}</TableCell>
+                    <TableCell className="font-medium">{member.fullName}</TableCell>
+                    <TableCell className="font-data text-mahogany-muted">{member.mobile}</TableCell>
+                    <TableCell>
+                      <Badge variant={member.status}>{member.status}</Badge>
+                    </TableCell>
+                    <TableCell className="font-data text-mahogany-muted">
+                      {member.membershipDate ? formatDate(member.membershipDate) : '—'}
+                    </TableCell>
+                    <TableCell className="pr-6 text-right">
                       <Link 
                         to={`/admin/members/${member.id}`}
-                        className="text-sm font-medium text-warm-gold opacity-0 group-hover:opacity-100 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-warm-gold rounded-sm focus-visible:opacity-100"
+                        className="text-sm font-medium text-warm-gold opacity-80 group-hover:opacity-100 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-warm-gold rounded-sm inline-flex items-center gap-1"
                       >
                         View Details →
                       </Link>
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           ) : (
             <EmptyState
               title="No members found"
-              description="No members match your current search term."
+              description={searchTerm ? `No members match "${searchTerm}".` : 'No registered members in the directory yet.'}
               icon="file"
               className="m-6"
             />

@@ -2,25 +2,26 @@ import { useState } from 'react'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Select } from '@/components/ui/FormControls'
+import { PageHeader } from '@/components/ui/PageHeader'
 import { Download, FileText, Users, Database } from 'lucide-react'
 import { toast } from '@/components/ui/Toast'
 import apiClient from '@/api/client'
+import { downloadBlob } from '@/lib/utils'
+import type { Member } from '@/types/member'
+import type { StatementItem } from '@/types/statement'
+
+interface AxiosErrorResponse {
+  response?: {
+    data?: {
+      message?: string
+    }
+  }
+}
 
 export function AdminExport() {
-  const [exportType, setExportType] = useState('members')
-  const [format, setFormat] = useState('csv')
+  const [exportType, setExportType] = useState<'members' | 'statements' | 'audit'>('members')
+  const [format, setFormat] = useState<'csv' | 'json'>('csv')
   const [isExporting, setIsExporting] = useState(false)
-
-  const triggerDownload = (blob: Blob, filename: string) => {
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = filename
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
-  }
 
   const handleExport = async () => {
     setIsExporting(true)
@@ -28,36 +29,36 @@ export function AdminExport() {
       if (exportType === 'audit') {
         const response = await apiClient.get('/activity-log/export', { responseType: 'blob' })
         const blob = new Blob([response.data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
-        triggerDownload(blob, `audit_logs_${new Date().toISOString().slice(0, 10)}.xlsx`)
+        downloadBlob(blob, `audit_logs_${new Date().toISOString().slice(0, 10)}.xlsx`)
       } else if (exportType === 'members') {
         const res = await apiClient.get('/members', { params: { limit: 1000 } })
-        const items = res.data?.data || res.data || []
+        const items: Member[] = res.data?.data || (Array.isArray(res.data) ? res.data : [])
         if (format === 'json') {
           const blob = new Blob([JSON.stringify(items, null, 2)], { type: 'application/json' })
-          triggerDownload(blob, `members_export_${new Date().toISOString().slice(0, 10)}.json`)
+          downloadBlob(blob, `members_export_${new Date().toISOString().slice(0, 10)}.json`)
         } else {
           const headers = ['Member No', 'Full Name', 'Mobile', 'Status', 'Date of Joining', 'Address']
-          const rows = items.map((m: any) => [
+          const rows = items.map((m) => [
             m.memberId || '',
             `"${(m.fullName || '').replace(/"/g, '""')}"`,
             m.mobile || '',
             m.status || '',
-            m.dateOfJoining ? new Date(m.dateOfJoining).toLocaleDateString() : '',
+            m.membershipDate ? new Date(m.membershipDate).toLocaleDateString() : '',
             `"${(m.addressLine1 || '').replace(/"/g, '""')}"`
           ].join(','))
           const csv = [headers.join(','), ...rows].join('\n')
           const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
-          triggerDownload(blob, `members_directory_${new Date().toISOString().slice(0, 10)}.csv`)
+          downloadBlob(blob, `members_directory_${new Date().toISOString().slice(0, 10)}.csv`)
         }
       } else if (exportType === 'statements') {
         const res = await apiClient.get('/statements/admin', { params: { limit: 1000 } })
-        const items = res.data?.data || res.data || []
+        const items: StatementItem[] = res.data?.data || (Array.isArray(res.data) ? res.data : [])
         if (format === 'json') {
           const blob = new Blob([JSON.stringify(items, null, 2)], { type: 'application/json' })
-          triggerDownload(blob, `statements_export_${new Date().toISOString().slice(0, 10)}.json`)
+          downloadBlob(blob, `statements_export_${new Date().toISOString().slice(0, 10)}.json`)
         } else {
           const headers = ['Period', 'Member ID', 'Category', 'Closing Balance', 'Status']
-          const rows = items.map((s: any) => [
+          const rows = items.map((s) => [
             s.period || '',
             s.member?.memberId || s.memberId || '',
             s.category || '',
@@ -66,12 +67,13 @@ export function AdminExport() {
           ].join(','))
           const csv = [headers.join(','), ...rows].join('\n')
           const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
-          triggerDownload(blob, `statements_export_${new Date().toISOString().slice(0, 10)}.csv`)
+          downloadBlob(blob, `statements_export_${new Date().toISOString().slice(0, 10)}.csv`)
         }
       }
       toast.success(`${exportType.charAt(0).toUpperCase() + exportType.slice(1)} data exported successfully`)
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Failed to export data. Please try again.')
+    } catch (err: unknown) {
+      const error = err as AxiosErrorResponse
+      toast.error(error.response?.data?.message || 'Failed to export data. Please try again.')
     } finally {
       setIsExporting(false)
     }
@@ -79,16 +81,10 @@ export function AdminExport() {
 
   return (
     <div className="space-y-8 animate-fade-slide-up">
-      <header className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-        <div>
-          <h1 className="text-display-md font-display text-dark-mahogany mb-1">
-            Export Data
-          </h1>
-          <p className="text-body text-mahogany-muted">
-            Generate and download reports for members, statements, and system audits.
-          </p>
-        </div>
-      </header>
+      <PageHeader
+        title="Export Data"
+        description="Generate and download reports for members, statements, and system audits."
+      />
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card padding="lg" className="md:col-span-2">
@@ -98,84 +94,61 @@ export function AdminExport() {
           <CardContent className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <Select
-                label="Data Type"
+                label="Dataset"
                 value={exportType}
-                onChange={(e) => setExportType(e.target.value)}
+                onChange={(e) => setExportType(e.target.value as 'members' | 'statements' | 'audit')}
                 options={[
-                  { value: 'members', label: 'Members Directory' },
+                  { value: 'members', label: 'Member Directory & KYC' },
                   { value: 'statements', label: 'Financial Statements' },
                   { value: 'audit', label: 'System Audit Logs' },
                 ]}
               />
               <Select
-                label="Export Format"
+                label="File Format"
                 value={format}
-                onChange={(e) => setFormat(e.target.value)}
+                onChange={(e) => setFormat(e.target.value as 'csv' | 'json')}
                 options={[
-                  { value: 'csv', label: 'CSV (Spreadsheet)' },
-                  { value: 'pdf', label: 'PDF Document' },
-                  { value: 'json', label: 'JSON (Raw Data)' },
+                  { value: 'csv', label: 'CSV / Excel Spreadsheet' },
+                  { value: 'json', label: 'JSON Data Format' },
                 ]}
+                disabled={exportType === 'audit'}
+                hint={exportType === 'audit' ? 'Audit logs export natively as XLSX' : undefined}
               />
-            </div>
-            
-            <div className="bg-verdant-green/5 p-4 rounded-[4px] border border-verdant-green/20 flex gap-4 items-start">
-              <div className="p-2 bg-verdant-green/10 rounded-full text-verdant-green shrink-0">
-                {exportType === 'members' ? <Users className="h-5 w-5" /> : exportType === 'statements' ? <FileText className="h-5 w-5" /> : <Database className="h-5 w-5" />}
-              </div>
-              <div>
-                <h4 className="text-sm font-bold text-dark-mahogany font-data">
-                  {exportType === 'members' ? 'Members Directory Export' : exportType === 'statements' ? 'Financial Statements Export' : 'System Audit Logs Export'}
-                </h4>
-                <p className="text-sm text-mahogany-muted mt-1">
-                  {exportType === 'members' 
-                    ? 'Includes all member personal details, KYC status, and contact information. Excludes passwords.' 
-                    : exportType === 'statements' 
-                    ? 'Includes all financial statements, ledger entries, and transaction history across all active members.' 
-                    : 'Includes all system activities, admin logins, and settings changes for compliance audits.'}
-                </p>
-              </div>
             </div>
 
             <div className="flex justify-end pt-4 border-t border-ledger-rule">
-              <Button 
-                variant="primary" 
-                leftIcon={<Download className="h-4 w-4" />} 
+              <Button
+                variant="primary"
+                leftIcon={<Download className="h-4 w-4" />}
                 onClick={handleExport}
                 isLoading={isExporting}
               >
-                Generate & Download
+                Export & Download
               </Button>
             </div>
           </CardContent>
         </Card>
 
-        <Card padding="lg" className="bg-ledger-paper/50">
-          <CardHeader className="mb-4 border-b border-ledger-rule pb-4">
-            <CardTitle className="text-base">Recent Exports</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between text-sm">
-                <div>
-                  <p className="font-medium text-dark-mahogany">Members Directory.csv</p>
-                  <p className="text-mahogany-muted text-xs">Today, 10:45 AM by Admin</p>
-                </div>
-                <Button variant="ghost" size="icon" className="h-8 w-8 text-warm-gold hover:bg-warm-gold/10 hover:text-warm-gold-hover">
-                  <Download className="h-4 w-4" />
-                </Button>
-              </div>
-              <div className="flex items-center justify-between text-sm">
-                <div>
-                  <p className="font-medium text-dark-mahogany">Audit Logs Q1.pdf</p>
-                  <p className="text-mahogany-muted text-xs">Yesterday, 4:20 PM by System</p>
-                </div>
-                <Button variant="ghost" size="icon" className="h-8 w-8 text-warm-gold hover:bg-warm-gold/10 hover:text-warm-gold-hover">
-                  <Download className="h-4 w-4" />
-                </Button>
-              </div>
+        {/* Info Card */}
+        <Card padding="md" className="bg-ivory border-ledger-rule space-y-4">
+          <h4 className="font-display text-lg text-dark-mahogany font-semibold">Report Information</h4>
+          <p className="text-sm font-body text-mahogany-muted">
+            All exported datasets are compiled in real-time directly from the encrypted database.
+          </p>
+          <div className="space-y-2 pt-2 text-xs font-body text-mahogany-muted">
+            <div className="flex items-center gap-2">
+              <Users className="h-4 w-4 text-warm-gold" />
+              <span>Full member registry with KYC status</span>
             </div>
-          </CardContent>
+            <div className="flex items-center gap-2">
+              <FileText className="h-4 w-4 text-warm-gold" />
+              <span>Monthly account & passbook summaries</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Database className="h-4 w-4 text-warm-gold" />
+              <span>Immutable administrative activity log</span>
+            </div>
+          </div>
         </Card>
       </div>
     </div>

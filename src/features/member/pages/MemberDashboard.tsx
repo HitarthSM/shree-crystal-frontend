@@ -2,17 +2,21 @@ import { Link } from 'react-router-dom'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 import { LedgerRow } from '@/components/ui/LedgerRow'
 import { Badge } from '@/components/ui/Badge'
-import { Button } from '@/components/ui/Button'
+import { Button, LinkButton } from '@/components/ui/Button'
+import { EmptyState } from '@/components/ui/EmptyState'
+import { PageHeader } from '@/components/ui/PageHeader'
+import { SkeletonCard } from '@/components/ui/Skeleton'
 import { formatINR } from '@/lib/utils'
 import { useAuthStore } from '@/store/auth.store'
-import { Download, AlertCircle, FileText } from 'lucide-react'
+import { Download, AlertCircle } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import apiClient from '@/api/client'
 import { formatDistanceToNow, format } from 'date-fns'
+import type { MemberDashboardData } from '@/types/dashboard'
 
 export function MemberDashboard() {
   const { user } = useAuthStore()
-  const { data, isLoading } = useQuery({
+  const { data, isLoading } = useQuery<MemberDashboardData>({
     queryKey: ['memberDashboard'],
     queryFn: () => apiClient.get('/members/me/dashboard').then(res => res.data)
   })
@@ -26,33 +30,28 @@ export function MemberDashboard() {
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
           <div className="lg:col-span-2 space-y-6">
-            <div className="h-64 bg-slate-200/50 animate-pulse rounded-[6px]" />
-            <div className="h-48 bg-slate-200/50 animate-pulse rounded-[6px]" />
+            <SkeletonCard />
+            <SkeletonCard />
           </div>
           <div className="space-y-6">
-            <div className="h-48 bg-slate-200/50 animate-pulse rounded-[6px]" />
-            <div className="h-64 bg-slate-200/50 animate-pulse rounded-[6px]" />
+            <SkeletonCard />
+            <SkeletonCard />
           </div>
         </div>
       </div>
     )
   }
 
-  const { latestLoan, latestStatement, recentNotices, openQueryCount } = data || {}
+  const { latestLoan, latestStatement, recentNotices, openQueryCount = 0 } = data || {}
 
   return (
     <div className="space-y-8 animate-fade-slide-up">
-      <header>
-        <h1 className="text-display-md font-display text-dark-mahogany mb-1">
-          Welcome back, {user?.name?.split(' ')[0] || 'Member'}
-        </h1>
-        <p className="text-body text-mahogany-muted">
-          Here is an easy overview of your accounts and recent activity as of today.
-        </p>
-      </header>
+      <PageHeader
+        title={`Welcome back, ${user?.name?.split(' ')[0] || 'Member'}`}
+        description="Here is an easy overview of your accounts and recent activity as of today."
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
-        
         {/* Left Column: Active Loans & Overview */}
         <div className="lg:col-span-2 space-y-6">
           <Card padding="lg" className="border-t-4 border-t-deep-saffron">
@@ -87,16 +86,12 @@ export function MemberDashboard() {
                   </div>
                 </>
               ) : (
-                <div className="py-8 text-center flex flex-col items-center border border-dashed border-ledger-rule rounded bg-ivory/50">
-                  <div className="h-12 w-12 rounded-full bg-deep-saffron/10 flex items-center justify-center mb-3">
-                    <FileText className="h-6 w-6 text-deep-saffron" />
-                  </div>
-                  <h3 className="font-display text-lg text-dark-mahogany mb-1">No Active Loans</h3>
-                  <p className="font-body text-sm text-mahogany-muted mb-4 max-w-sm">
-                    You do not have any active loans with the society right now.
-                  </p>
-                  <Button variant="primary">Apply for a Loan</Button>
-                </div>
+                <EmptyState
+                  icon="file"
+                  title="No Active Loans"
+                  description="You do not have any active loans with the society right now."
+                  action={<Button variant="primary">Apply for a Loan</Button>}
+                />
               )}
             </CardContent>
           </Card>
@@ -170,14 +165,18 @@ export function MemberDashboard() {
             </CardHeader>
             <CardContent className="p-6 pt-0 space-y-4">
               {recentNotices && recentNotices.length > 0 ? (
-                recentNotices.map((item: any) => {
-                  const notice = item.notice || item
-                  const category = (notice.category || 'GENERAL').toUpperCase()
-                  const noticeDate = notice.publishedAt || notice.createdAt
+                recentNotices.map((item) => {
+                  const title = item.notice?.title || item.title || 'Society Notice'
+                  const body = item.notice?.body || item.notice?.content || item.body || item.content || ''
+                  const category = ((item.notice?.category || item.category || 'GENERAL') as string).toUpperCase()
+                  const noticeDate = item.notice?.publishedAt || item.notice?.createdAt || item.publishedAt || item.createdAt
                   const validDate = noticeDate && !isNaN(new Date(noticeDate).getTime())
-                  const isUrgent = category === 'URGENT' || notice.priority === 'HIGH'
+                  const priority = item.notice?.priority || item.priority
+                  const isUrgent = category === 'URGENT' || priority === 'HIGH'
+                  const noticeId = item.notice?.id || item.id
+
                   return (
-                    <div key={item.id || notice.id} className="p-4 rounded-[4px] bg-white border border-ledger-rule shadow-paper relative">
+                    <div key={noticeId} className="p-4 rounded-[4px] bg-white border border-ledger-rule shadow-paper relative">
                       {isUrgent && (
                         <div className="absolute top-0 left-0 w-1 h-full bg-deep-crimson rounded-l-[4px]" />
                       )}
@@ -186,14 +185,14 @@ export function MemberDashboard() {
                           {category}
                         </Badge>
                         <span className="font-data text-xs text-mahogany-muted">
-                          {validDate ? formatDistanceToNow(new Date(noticeDate), { addSuffix: true }) : 'Recent'}
+                          {validDate && noticeDate ? formatDistanceToNow(new Date(noticeDate), { addSuffix: true }) : 'Recent'}
                         </span>
                       </div>
                       <h4 className="font-body font-medium text-dark-mahogany text-sm mb-1">
-                        {notice.title}
+                        {title}
                       </h4>
                       <p className="font-body text-sm text-mahogany-muted line-clamp-2">
-                        {notice.body || notice.content}
+                        {body}
                       </p>
                     </div>
                   )
@@ -216,14 +215,15 @@ export function MemberDashboard() {
                   <h4 className="font-display font-medium text-dark-mahogany">Pending Help Questions</h4>
                   <p className="text-sm font-body text-mahogany-muted">Our office team is currently looking into your questions.</p>
                 </div>
-                <Link to="/dashboard/support" className="ml-auto">
-                  <Button variant="secondary" size="sm">View Questions</Button>
-                </Link>
+                <div className="ml-auto">
+                  <LinkButton to="/dashboard/support" variant="secondary" size="sm">
+                    View Questions
+                  </LinkButton>
+                </div>
               </div>
             </Card>
           )}
         </div>
-
       </div>
     </div>
   )

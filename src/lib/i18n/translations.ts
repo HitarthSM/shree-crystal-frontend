@@ -22,17 +22,36 @@ export interface TranslationSchema {
   stats: {
     yearsVal: string
     yearsLabel: string
+    yearsServing: string
     membersVal: string
     membersLabel: string
+    activeMembers: string
     disbursedVal: string
     disbursedLabel: string
+    loansDisbursed: string
     auditVal: string
     auditBadge: string
     auditLabel: string
+    statutoryCompliance: string
+  }
+  services: {
+    sectionHeading: string
+    sectionSubheading: string
+    savingsTitle: string
+    savingsDesc: string
+    savingsTag: string
+    personalLoansTitle: string
+    personalLoansDesc: string
+    personalLoansTag: string
+    fdTitle: string
+    fdDesc: string
+    fdTag: string
   }
   about: {
     tagline: string
     title: string
+    heading: string
+    readFullStory: string
     regNo: string
     founded: string
     members: string
@@ -42,9 +61,11 @@ export interface TranslationSchema {
   notices: {
     tagline: string
     title: string
+    publicAnnouncements: string
     viewAll: string
     loading: string
     empty: string
+    noNotices: string
   }
   calculator: {
     title: string
@@ -130,17 +151,36 @@ export const translations: Record<Language, TranslationSchema> = {
     stats: {
       yearsVal: '35+ Yrs',
       yearsLabel: 'Serving Since 1985',
+      yearsServing: 'Serving Since 1985',
       membersVal: '1,847',
       membersLabel: 'Active Members',
+      activeMembers: 'Active Members',
       disbursedVal: '₹15 Cr+',
       disbursedLabel: 'Loans Given',
+      loansDisbursed: 'Loans Disbursed',
       auditVal: 'Grade A',
       auditBadge: 'Audit',
       auditLabel: '100% Legally Verified',
+      statutoryCompliance: 'Statutory Compliance',
+    },
+    services: {
+      sectionHeading: 'Comprehensive Financial Services',
+      sectionSubheading: 'Empowering members with ethical, community-centric financial products since 1985.',
+      savingsTitle: 'Member Savings & Deposits',
+      savingsDesc: 'Secure high-interest savings accounts backed by cooperative principles and audited security.',
+      savingsTag: 'Popular',
+      personalLoansTitle: 'Low-Interest Member Loans',
+      personalLoansDesc: 'Fast approval personal, business, and emergency credit with straightforward repayment terms.',
+      personalLoansTag: 'Flexible',
+      fdTitle: 'Fixed Term Deposits',
+      fdDesc: 'Guaranteed returns on fixed tenures to help your family and business build long-term wealth.',
+      fdTag: 'Guaranteed',
     },
     about: {
       tagline: 'Our Society Story',
       title: 'About Shree Crystal Co-op',
+      heading: 'About Shree Crystal Co-op',
+      readFullStory: 'Read Full Society Story',
       regNo: 'Govt Reg No:',
       founded: 'Established:',
       members: 'Total Members:',
@@ -151,9 +191,11 @@ export const translations: Record<Language, TranslationSchema> = {
     notices: {
       tagline: 'Official Announcements',
       title: 'Latest Notices & Circulars',
+      publicAnnouncements: 'Public Notices & Circulars',
       viewAll: 'View all notices',
       loading: 'Loading notices...',
       empty: 'No public notices right now. Please check back later.',
+      noNotices: 'No public notices right now. Please check back later.',
     },
     calculator: {
       title: 'Loan EMI Calculator',
@@ -239,17 +281,36 @@ export const translations: Record<Language, TranslationSchema> = {
     stats: {
       yearsVal: '૩૫+ વર્ષ',
       yearsLabel: '૧૯૮૫ થી સેવારત',
+      yearsServing: '૧૯૮૫ થી સેવારત',
       membersVal: '૧,૮૪૭',
       membersLabel: 'સક્રિય સભ્યો',
+      activeMembers: 'સક્રિય સભ્યો',
       disbursedVal: '₹૧૫ કરોડ+',
       disbursedLabel: 'ધિરાણ વિતરણ',
+      loansDisbursed: 'ધિરાણ વિતરણ',
       auditVal: 'વર્ગ "અ"',
       auditBadge: 'ઓડિટ',
       auditLabel: '૧૦૦% કાયદેસર પાલન',
+      statutoryCompliance: '૧૦૦% કાયદેસર પાલન',
+    },
+    services: {
+      sectionHeading: 'સંપૂર્ણ સહકારી નાણાકીય સેવાઓ',
+      sectionSubheading: '૧૯૮૫ થી સભ્યોને વિશ્વસનીય અને પારદર્શક નાણાકીય સેવાઓ પૂરી પાડીએ છીએ.',
+      savingsTitle: 'સભ્ય બચત ખાતું અને થાપણો',
+      savingsDesc: 'સહકારી સિદ્ધાંતો અને ઓડિટ સુરક્ષા દ્વારા સમર્થિત ઊંચા વળતરવાળી બચત સેવાઓ.',
+      savingsTag: 'લોકપ્રિય',
+      personalLoansTitle: 'સરળ ધિરાણ અને પર્સનલ લોન',
+      personalLoansDesc: 'સરળ અને પારદર્શક શરતો સાથે તાત્કાલિક વ્યક્તિગત, વ્યાપાર અને કટોકટી ધિરાણ.',
+      personalLoansTag: 'સરળ શરતો',
+      fdTitle: 'મુદ્દતી થાપણ (FD)',
+      fdDesc: 'નિશ્ચિત સમયગાળા માટે સુરક્ષિત અને ચોક્કસ વ્યાજ આપતી ગેરંટેડ મુદ્દતી થાપણો.',
+      fdTag: 'સુરક્ષિત',
     },
     about: {
       tagline: 'આપણો સહકારી વારસો',
       title: 'મંડળી વિશે',
+      heading: 'મંડળી વિશે',
+      readFullStory: 'સંપૂર્ણ ઇતિહાસ વાંચો',
       regNo: 'નોંધણી નં:',
       founded: 'સ્થાપના:',
       members: 'સભ્યો:',
@@ -260,9 +321,11 @@ export const translations: Record<Language, TranslationSchema> = {
     notices: {
       tagline: 'સત્તાવાર જાહેરાતો',
       title: 'તાજેતરની નોટિસો',
+      publicAnnouncements: 'જાહેર નોટિસો અને પરિપત્રો',
       viewAll: 'બધી નોટિસો જુઓ',
       loading: 'નોટિસો લોડ થઈ રહી છે...',
       empty: 'હાલમાં કોઈ જાહેર નોટિસ ઉપલબ્ધ નથી.',
+      noNotices: 'હાલમાં કોઈ જાહેર નોટિસ ઉપલબ્ધ નથી.',
     },
     calculator: {
       title: 'ઇ.એમ.આઇ. કેલ્ક્યુલેટર',

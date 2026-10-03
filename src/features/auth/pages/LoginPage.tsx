@@ -7,9 +7,9 @@ import { Eye, EyeOff } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/FormControls'
 import { toast } from '@/components/ui/Toast'
-
+import { isAxiosError } from 'axios'
 import { authApi } from '@/api/auth'
-import { useAuthStore } from '@/store/auth.store'
+import { useAuthStore, type UserRole } from '@/store/auth.store'
 
 const loginSchema = z.object({
   memberId: z.string().min(1, 'Member ID is required'),
@@ -43,9 +43,10 @@ export function LoginPage() {
       const userProfile = await authApi.getMe()
       
       const userType = userProfile.userType || (userProfile.role ? 'ADMIN' : 'MEMBER')
-      const role = (userType === 'ADMIN'
-        ? (userProfile.role || 'admin').toLowerCase()
-        : 'member') as any
+      const rawRole = userType === 'ADMIN' ? (userProfile.role || 'admin').toLowerCase() : 'member'
+      const role: UserRole = (['member', 'admin', 'super_admin', 'operator', 'viewer'].includes(rawRole)
+        ? rawRole
+        : 'member') as UserRole
 
       setUser({
         id: userProfile.id,
@@ -68,8 +69,8 @@ export function LoginPage() {
       const from = location.state?.from || (userType === 'ADMIN' ? '/admin' : '/dashboard')
       navigate(from, { replace: true })
       
-    } catch (error: any) {
-      if (error.response?.status === 401 || error.response?.status === 400) {
+    } catch (error: unknown) {
+      if (isAxiosError(error) && (error.response?.status === 401 || error.response?.status === 400)) {
         toast.error('Invalid Member ID or password.')
       } else {
         toast.error('An error occurred during login. Please try again.')

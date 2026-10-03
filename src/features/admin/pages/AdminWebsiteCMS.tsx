@@ -1,13 +1,23 @@
 import { useState, useEffect } from 'react'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
-import { Input } from '@/components/ui/FormControls'
+import { Input, Textarea } from '@/components/ui/FormControls'
+import { PageHeader } from '@/components/ui/PageHeader'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import apiClient from '@/api/client'
 import { toast } from '@/components/ui/Toast'
 import { Save } from 'lucide-react'
 
-// Simple CMS text editor
+interface ContentItem {
+  text?: string
+}
+
+interface ContactInfo {
+  email?: string
+  phone?: string
+  address?: string
+}
+
 export function AdminWebsiteCMS() {
   const queryClient = useQueryClient()
   const [aboutUsText, setAboutUsText] = useState('')
@@ -17,17 +27,17 @@ export function AdminWebsiteCMS() {
   const [contactAddress, setContactAddress] = useState('')
 
   // Fetch all existing settings
-  const { data: aboutData } = useQuery({
+  const { data: aboutData } = useQuery<ContentItem | string>({
     queryKey: ['public.content.about_us'],
     queryFn: () => apiClient.get('/settings/public-content/public.content.about_us').then(res => res.data),
   })
 
-  const { data: visionData } = useQuery({
+  const { data: visionData } = useQuery<ContentItem | string>({
     queryKey: ['public.content.vision_mission'],
     queryFn: () => apiClient.get('/settings/public-content/public.content.vision_mission').then(res => res.data),
   })
 
-  const { data: contactData } = useQuery({
+  const { data: contactData } = useQuery<ContactInfo>({
     queryKey: ['public.content.contact_info'],
     queryFn: () => apiClient.get('/settings/public-content/public.content.contact_info').then(res => res.data),
   })
@@ -55,7 +65,7 @@ export function AdminWebsiteCMS() {
   }, [contactData])
 
   const updateSetting = useMutation({
-    mutationFn: ({ key, value }: { key: string, value: any }) => 
+    mutationFn: ({ key, value }: { key: string; value: Record<string, string> }) => 
       apiClient.put(`/settings/public-content/${key}`, value),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: [variables.key] })
@@ -81,14 +91,10 @@ export function AdminWebsiteCMS() {
 
   return (
     <div className="space-y-8 animate-fade-slide-up">
-      <header>
-        <h1 className="text-display-md font-display text-dark-mahogany mb-1">
-          Website CMS
-        </h1>
-        <p className="text-body text-mahogany-muted">
-          Manage the dynamic text and content for the public website.
-        </p>
-      </header>
+      <PageHeader
+        title="Website CMS"
+        description="Manage the dynamic text and content for the public website."
+      />
 
       <div className="grid grid-cols-1 gap-8">
         <Card>
@@ -96,18 +102,21 @@ export function AdminWebsiteCMS() {
             <CardTitle>About Us Section</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex flex-col gap-2">
-              <label className="text-sm font-medium text-dark-mahogany">About Us Text</label>
-              <textarea 
-                className="w-full min-h-[150px] p-3 border border-ledger-rule rounded-md focus:outline-none focus:ring-2 focus:ring-verdant-green/50 font-body"
-                value={aboutUsText}
-                onChange={e => setAboutUsText(e.target.value)}
-                placeholder="Enter the history and overview of Shree Crystal..."
-              />
-            </div>
+            <Textarea 
+              label="About Us Text"
+              className="min-h-[150px]"
+              value={aboutUsText}
+              onChange={(e) => setAboutUsText(e.target.value)}
+              placeholder="Enter the history and overview of Shree Crystal..."
+            />
             <div className="flex justify-end">
-              <Button onClick={handleSaveAbout} isLoading={updateSetting.isPending} className="gap-2">
-                <Save className="w-4 h-4" /> Save About Us
+              <Button
+                variant="primary"
+                onClick={handleSaveAbout}
+                isLoading={updateSetting.isPending}
+                leftIcon={<Save className="w-4 h-4" />}
+              >
+                Save About Us
               </Button>
             </div>
           </CardContent>
@@ -118,18 +127,21 @@ export function AdminWebsiteCMS() {
             <CardTitle>Vision & Mission</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex flex-col gap-2">
-              <label className="text-sm font-medium text-dark-mahogany">Vision & Mission Text</label>
-              <textarea 
-                className="w-full min-h-[100px] p-3 border border-ledger-rule rounded-md focus:outline-none focus:ring-2 focus:ring-verdant-green/50 font-body"
-                value={visionText}
-                onChange={e => setVisionText(e.target.value)}
-                placeholder="Enter the vision and mission statement..."
-              />
-            </div>
+            <Textarea 
+              label="Vision & Mission Text"
+              className="min-h-[100px]"
+              value={visionText}
+              onChange={(e) => setVisionText(e.target.value)}
+              placeholder="Enter the vision and mission statement..."
+            />
             <div className="flex justify-end">
-              <Button onClick={handleSaveVision} isLoading={updateSetting.isPending} className="gap-2">
-                <Save className="w-4 h-4" /> Save Vision
+              <Button
+                variant="primary"
+                onClick={handleSaveVision}
+                isLoading={updateSetting.isPending}
+                leftIcon={<Save className="w-4 h-4" />}
+              >
+                Save Vision
               </Button>
             </div>
           </CardContent>
@@ -144,29 +156,31 @@ export function AdminWebsiteCMS() {
               <Input 
                 label="Support Email" 
                 value={contactEmail} 
-                onChange={(e: any) => setContactEmail(e.target.value)} 
+                onChange={(e) => setContactEmail(e.target.value)} 
                 placeholder="support@shreecrystal.com" 
               />
               <Input 
                 label="Phone Number" 
                 value={contactPhone} 
-                onChange={(e: any) => setContactPhone(e.target.value)} 
+                onChange={(e) => setContactPhone(e.target.value)} 
                 placeholder="+91 9876543210" 
               />
             </div>
-            <div className="flex flex-col gap-2 mt-4">
-              <label className="text-sm font-medium text-dark-mahogany">Branch Address</label>
-              <textarea 
-                className="w-full p-3 border border-ledger-rule rounded-md focus:outline-none focus:ring-2 focus:ring-verdant-green/50 font-body"
-                value={contactAddress}
-                onChange={e => setContactAddress(e.target.value)}
-                placeholder="Full address of the main branch..."
-                rows={3}
-              />
-            </div>
+            <Textarea 
+              label="Branch Address"
+              value={contactAddress}
+              onChange={(e) => setContactAddress(e.target.value)}
+              placeholder="Full address of the main branch..."
+              rows={3}
+            />
             <div className="flex justify-end">
-              <Button onClick={handleSaveContact} isLoading={updateSetting.isPending} className="gap-2">
-                <Save className="w-4 h-4" /> Save Contact Info
+              <Button
+                variant="primary"
+                onClick={handleSaveContact}
+                isLoading={updateSetting.isPending}
+                leftIcon={<Save className="w-4 h-4" />}
+              >
+                Save Contact Info
               </Button>
             </div>
           </CardContent>
