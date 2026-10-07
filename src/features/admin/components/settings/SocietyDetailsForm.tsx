@@ -14,6 +14,10 @@ interface SocietyDetailsData {
   registrationNo?: string
   address?: string
   logoUrl?: string
+  bankName?: string
+  accountNumber?: string
+  ifscCode?: string
+  upiVpa?: string
 }
 
 export function SocietyDetailsForm() {
@@ -29,6 +33,10 @@ export function SocietyDetailsForm() {
       registrationNumber: string
       address: string
       logoUrl?: string
+      bankName?: string
+      accountNumber?: string
+      ifscCode?: string
+      upiVpa?: string
     }) => apiClient.put('/settings/society', payload).then((r) => r.data),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['societyDetails'] }),
   })
@@ -37,6 +45,10 @@ export function SocietyDetailsForm() {
   const [registrationNumber, setRegistrationNumber] = useState('')
   const [address, setAddress] = useState('')
   const [logoUrl, setLogoUrl] = useState('')
+  const [bankName, setBankName] = useState('')
+  const [accountNumber, setAccountNumber] = useState('')
+  const [ifscCode, setIfscCode] = useState('')
+  const [upiVpa, setUpiVpa] = useState('')
 
   useEffect(() => {
     if (data) {
@@ -44,6 +56,10 @@ export function SocietyDetailsForm() {
       setRegistrationNumber(data.registrationNumber || data.registrationNo || '')
       setAddress(data.address || '')
       setLogoUrl(data.logoUrl || '')
+      setBankName(data.bankName || '')
+      setAccountNumber(data.accountNumber || '')
+      setIfscCode(data.ifscCode || '')
+      setUpiVpa(data.upiVpa || '')
     }
   }, [data])
 
@@ -54,6 +70,10 @@ export function SocietyDetailsForm() {
         registrationNumber,
         address,
         logoUrl: logoUrl.trim() ? logoUrl.trim() : undefined,
+        bankName: bankName.trim() ? bankName.trim() : undefined,
+        accountNumber: accountNumber.trim() ? accountNumber.trim() : undefined,
+        ifscCode: ifscCode.trim() ? ifscCode.trim().toUpperCase() : undefined,
+        upiVpa: upiVpa.trim() ? upiVpa.trim().toLowerCase() : undefined,
       })
       toast.success('Society details updated successfully')
     } catch {
@@ -87,6 +107,38 @@ export function SocietyDetailsForm() {
           />
         </div>
         <Input label="Full Address" value={address} onChange={(e) => setAddress(e.target.value)} />
+
+        <div className="pt-4 border-t border-ledger-rule">
+          <h4 className="font-display text-base text-dark-mahogany font-semibold mb-3">Official Remittance Coordinates (UPI & Net Banking)</h4>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Input
+              label="Bank Name"
+              placeholder="e.g. State Bank of India"
+              value={bankName}
+              onChange={(e) => setBankName(e.target.value)}
+            />
+            <Input
+              label="Account Number"
+              placeholder="e.g. 40123456789"
+              value={accountNumber}
+              onChange={(e) => setAccountNumber(e.target.value)}
+            />
+            <Input
+              label="IFSC Code"
+              placeholder="e.g. SBIN0001234"
+              className="uppercase"
+              value={ifscCode}
+              onChange={(e) => setIfscCode(e.target.value)}
+            />
+            <Input
+              label="UPI ID / VPA"
+              placeholder="e.g. shreecrystal@sbi"
+              className="lowercase"
+              value={upiVpa}
+              onChange={(e) => setUpiVpa(e.target.value)}
+            />
+          </div>
+        </div>
 
         <div className="flex justify-end pt-4 border-t border-ledger-rule">
           <Button

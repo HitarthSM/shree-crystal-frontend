@@ -9,11 +9,9 @@ import { formatINR, formatDate, maskAadhaar, maskPAN } from '@/lib/utils'
 import { Edit3, ShieldAlert, FileText, Landmark } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import apiClient from '@/api/client'
+import { Link } from 'react-router-dom'
 import type { Member } from '@/types/member'
-
-const activeLoans = [
-  { id: 'L-24-089', type: 'Personal Loan', principal: 500000, outstanding: 45000, emi: 5200, nextDue: '05 Apr 2025' }
-]
+import type { StatementItem } from '@/types/statement'
 
 export function AdminMemberDetail() {
   const { id } = useParams<{ id: string }>()
@@ -22,6 +20,12 @@ export function AdminMemberDetail() {
     queryKey: ['member', id],
     queryFn: () => apiClient.get(`/members/${id}`).then(res => res.data),
     enabled: !!id,
+  })
+
+  const { data: statementsData } = useQuery<{ data?: StatementItem[]; items?: StatementItem[] } | StatementItem[]>({
+    queryKey: ['memberStatements', member?.memberId],
+    queryFn: () => apiClient.get('/statements', { params: { memberId: member?.memberId } }).then(res => res.data),
+    enabled: !!member?.memberId,
   })
 
   if (isLoading) {
@@ -144,31 +148,44 @@ export function AdminMemberDetail() {
               </CardTitle>
             </CardHeader>
             <CardContent className="p-6">
-              {activeLoans.map(loan => (
-                <div key={loan.id} className="border border-ledger-rule rounded-[4px] p-4 bg-white shadow-paper">
-                  <div className="flex justify-between items-start mb-4 pb-4 border-b border-ledger-rule border-dashed">
-                    <div>
-                      <h4 className="font-body font-semibold text-dark-mahogany">{loan.type}</h4>
-                      <p className="font-data text-sm text-mahogany-muted">{loan.id}</p>
+              {member.loans && member.loans.length > 0 ? (
+                member.loans.map((loan) => {
+                  const rate = Number(loan.loanType?.interestRate || 10)
+                  const principal = Number(loan.principalAmount || 0)
+                  const outstanding = Number(loan.outstandingAmount || 0)
+                  const estimatedEmi = Math.round((principal * (rate / 100)) / 12 + principal / 24)
+
+                  return (
+                    <div key={loan.id} className="border border-ledger-rule rounded-[4px] p-4 bg-white shadow-paper mb-4 last:mb-0">
+                      <div className="flex justify-between items-start mb-4 pb-4 border-b border-ledger-rule border-dashed">
+                        <div>
+                          <h4 className="font-body font-semibold text-dark-mahogany">{loan.loanType?.name || 'Member Loan'}</h4>
+                          <p className="font-data text-sm text-mahogany-muted">{loan.id}</p>
+                        </div>
+                        <Badge variant={loan.status === 'ACTIVE' ? 'active' : 'pending'}>{loan.status}</Badge>
+                      </div>
+                      <div className="grid grid-cols-3 gap-4">
+                        <div>
+                          <p className="text-xs font-body text-mahogany-muted mb-1">Principal</p>
+                          <p className="font-data text-sm text-dark-mahogany font-semibold">{formatINR(principal)}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs font-body text-mahogany-muted mb-1">Outstanding</p>
+                          <p className="font-data text-sm font-medium text-warm-gold font-semibold">{formatINR(outstanding)}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs font-body text-mahogany-muted mb-1">Est. EMI ({rate}% p.a.)</p>
+                          <p className="font-data text-sm text-deep-crimson font-semibold">{formatINR(estimatedEmi)}</p>
+                        </div>
+                      </div>
                     </div>
-                    <Badge variant="active">Active</Badge>
-                  </div>
-                  <div className="grid grid-cols-3 gap-4">
-                    <div>
-                      <p className="text-xs font-body text-mahogany-muted mb-1">Principal</p>
-                      <p className="font-data text-sm text-dark-mahogany font-semibold">{formatINR(loan.principal)}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs font-body text-mahogany-muted mb-1">Outstanding</p>
-                      <p className="font-data text-sm font-medium text-warm-gold font-semibold">{formatINR(loan.outstanding)}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs font-body text-mahogany-muted mb-1">EMI (Due {loan.nextDue})</p>
-                      <p className="font-data text-sm text-deep-crimson font-semibold">{formatINR(loan.emi)}</p>
-                    </div>
-                  </div>
+                  )
+                })
+              ) : (
+                <div className="p-4 text-center text-sm font-body text-mahogany-muted">
+                  No active loans on file for this member.
                 </div>
-              ))}
+              )}
             </CardContent>
           </Card>
 
@@ -179,23 +196,36 @@ export function AdminMemberDetail() {
                 <FileText className="h-5 w-5 text-mahogany-muted" />
                 Recent Statements
               </CardTitle>
-              <Button variant="ghost" size="sm">View All</Button>
+              <Link to="/admin/statements" className="text-xs font-medium text-warm-gold hover:text-warm-gold-hover">
+                Manage Batches
+              </Link>
             </CardHeader>
             <CardContent className="p-0">
-              <LedgerRow
-                stamped
-                title="Savings Account Statement"
-                subtitle="Recent Period"
-                date="Current"
-                className="px-6"
-              />
-              <LedgerRow
-                stamped
-                title="Personal Loan Statement"
-                subtitle="Recent Period"
-                date="Current"
-                className="px-6"
-              />
+              {(() => {
+                const statementsList = Array.isArray(statementsData)
+                  ? statementsData
+                  : (statementsData?.data || statementsData?.items || [])
+
+                if (statementsList.length === 0) {
+                  return (
+                    <div className="p-6 text-center text-sm font-body text-mahogany-muted">
+                      No published statements found for this member.
+                    </div>
+                  )
+                }
+
+                return statementsList.slice(0, 5).map((stmt) => (
+                  <LedgerRow
+                    key={stmt.id}
+                    stamped={stmt.status === 'PUBLISHED'}
+                    title={`${stmt.category || 'General'} Statement - ${stmt.period}`}
+                    subtitle={`Status: ${stmt.status}`}
+                    date={stmt.createdAt ? formatDate(stmt.createdAt) : ''}
+                    className="px-6"
+                    badge={<Badge variant={stmt.status === 'PUBLISHED' ? 'published' : 'pending'}>{stmt.status}</Badge>}
+                  />
+                ))
+              })()}
             </CardContent>
           </Card>
         </div>
