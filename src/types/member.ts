@@ -26,6 +26,28 @@ export interface Member {
   updatedAt: string;
   panEncrypted?: string | null;
   aadhaarEncrypted?: string | null;
+  loans?: MemberLoan[];
+}
+
+export interface MemberLoan {
+  id: string;
+  memberId: string;
+  principalAmount: number | string;
+  outstandingAmount: number | string;
+  status: string;
+  createdAt: string;
+  updatedAt?: string;
+  loanType?: {
+    id: string;
+    name: string;
+    interestRate: number | string;
+  };
+  repayments?: Array<{
+    id: string;
+    amount: number | string;
+    status: string;
+    paidAt: string;
+  }>;
 }
 
 export interface PaginatedResponse<T> {

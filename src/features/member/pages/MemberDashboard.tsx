@@ -20,6 +20,11 @@ export function MemberDashboard() {
     queryKey: ['memberDashboard'],
     queryFn: () => apiClient.get('/members/me/dashboard').then(res => res.data)
   })
+
+  const { data: memberProfile } = useQuery({
+    queryKey: ['memberProfile'],
+    queryFn: () => apiClient.get('/members/me').then(res => res.data),
+  })
   
   if (isLoading) {
     return (
@@ -97,30 +102,67 @@ export function MemberDashboard() {
           </Card>
 
           <Card padding="none">
-            <CardHeader className="p-6 pb-2">
+            <CardHeader className="p-6 pb-2 flex flex-row items-center justify-between">
               <CardTitle>Recent Passbook Activity</CardTitle>
+              <Link to="/dashboard/statements" className="text-xs font-semibold text-warm-gold hover:text-warm-gold-hover">
+                View Statements &rarr;
+              </Link>
             </CardHeader>
             <CardContent className="px-6 pb-6 pt-2">
-              <LedgerRow
-                stamped
-                title="EMI Payment Received"
-                subtitle="Online transfer via UPI"
-                date="05 Mar 2025"
-                mono={<span className="text-verdant-green">+{formatINR(5200)}</span>}
-              />
-              <LedgerRow
-                stamped
-                title="Dividend Credited"
-                subtitle="FY 2023-24"
-                date="02 Mar 2025"
-                mono={<span className="text-verdant-green">+{formatINR(1250)}</span>}
-              />
-              <LedgerRow
-                title="Interest Capitalised"
-                subtitle="Fixed Deposit FD-992"
-                date="31 Dec 2024"
-                mono={<span className="text-verdant-green">+{formatINR(340)}</span>}
-              />
+              {(() => {
+                const activities = []
+
+                if (memberProfile?.shareCapital) {
+                  activities.push({
+                    id: 'share-capital',
+                    title: 'Share Capital Deposit',
+                    subtitle: 'Equity Membership Allotment',
+                    date: memberProfile.membershipDate
+                      ? format(new Date(memberProfile.membershipDate), 'dd MMM yyyy')
+                      : 'Joined',
+                    amount: Number(memberProfile.shareCapital),
+                    isCredit: true,
+                    stamped: true,
+                  })
+                }
+
+                if (latestLoan) {
+                  activities.push({
+                    id: `loan-${latestLoan.id}`,
+                    title: `${latestLoan.type || 'Personal Loan'} Disbursement`,
+                    subtitle: `Account #${latestLoan.id}`,
+                    date: latestLoan.createdAt
+                      ? format(new Date(latestLoan.createdAt), 'dd MMM yyyy')
+                      : 'Recent',
+                    amount: Number(latestLoan.outstandingPrincipal || 0),
+                    isCredit: false,
+                    stamped: true,
+                  })
+                }
+
+                if (activities.length === 0) {
+                  return (
+                    <div className="py-6 text-center text-sm font-body text-mahogany-muted">
+                      No recent ledger transactions recorded yet.
+                    </div>
+                  )
+                }
+
+                return activities.map((act) => (
+                  <LedgerRow
+                    key={act.id}
+                    stamped={act.stamped}
+                    title={act.title}
+                    subtitle={act.subtitle}
+                    date={act.date}
+                    mono={
+                      <span className={act.isCredit ? 'text-verdant-green font-semibold' : 'text-deep-crimson font-semibold'}>
+                        {act.isCredit ? '+' : '-'}{formatINR(act.amount)}
+                      </span>
+                    }
+                  />
+                ))
+              })()}
             </CardContent>
           </Card>
         </div>

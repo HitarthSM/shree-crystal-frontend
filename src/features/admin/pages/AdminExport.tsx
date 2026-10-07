@@ -32,7 +32,7 @@ export function AdminExport() {
         downloadBlob(blob, `audit_logs_${new Date().toISOString().slice(0, 10)}.xlsx`)
       } else if (exportType === 'members') {
         const res = await apiClient.get('/members', { params: { limit: 1000 } })
-        const items: Member[] = res.data?.data || (Array.isArray(res.data) ? res.data : [])
+        const items: Member[] = res.data?.items || res.data?.data || (Array.isArray(res.data) ? res.data : [])
         if (format === 'json') {
           const blob = new Blob([JSON.stringify(items, null, 2)], { type: 'application/json' })
           downloadBlob(blob, `members_export_${new Date().toISOString().slice(0, 10)}.json`)
@@ -51,8 +51,8 @@ export function AdminExport() {
           downloadBlob(blob, `members_directory_${new Date().toISOString().slice(0, 10)}.csv`)
         }
       } else if (exportType === 'statements') {
-        const res = await apiClient.get('/statements/admin', { params: { limit: 1000 } })
-        const items: StatementItem[] = res.data?.data || (Array.isArray(res.data) ? res.data : [])
+        const res = await apiClient.get('/statements', { params: { limit: 1000 } })
+        const items: StatementItem[] = res.data?.data || res.data?.items || (Array.isArray(res.data) ? res.data : [])
         if (format === 'json') {
           const blob = new Blob([JSON.stringify(items, null, 2)], { type: 'application/json' })
           downloadBlob(blob, `statements_export_${new Date().toISOString().slice(0, 10)}.json`)

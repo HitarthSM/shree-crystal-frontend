@@ -53,9 +53,12 @@ export interface MemberDashboardData {
   latestLoan?: {
     id: string;
     type?: string;
+    principalAmount?: number;
+    outstandingAmount?: number;
     outstandingPrincipal?: number;
     emiAmount?: number;
     nextEmiDate?: string;
+    createdAt?: string;
   };
   latestStatement?: {
     id: string;

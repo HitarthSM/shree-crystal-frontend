@@ -1,5 +1,6 @@
 /// <reference types="vite/client" />
 import axios, { type InternalAxiosRequestConfig } from 'axios'
+import { useAuthStore } from '../store/auth.store'
 
 const rawBase = import.meta.env.VITE_API_URL ?? 'http://localhost:3000/api'
 const API_BASE = rawBase.endsWith('/') ? rawBase.slice(0, -1) : rawBase
@@ -11,8 +12,6 @@ export const apiClient = axios.create({
     'Content-Type': 'application/json',
   },
 })
-
-import { useAuthStore } from '../store/auth.store'
 
 // Request interceptor — inject token
 apiClient.interceptors.request.use((config) => {
@@ -50,6 +49,11 @@ function refreshAccessToken(): Promise<string> {
 
 function endSession() {
   useAuthStore.getState().clearUser()
+  try {
+    window.localStorage.removeItem('SHREE_CRYSTAL_WEB_QUERY_CACHE')
+  } catch {
+    // Ignore storage clear failure
+  }
   window.location.href = '/login'
 }
 
