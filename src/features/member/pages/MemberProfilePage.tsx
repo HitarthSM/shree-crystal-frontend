@@ -10,7 +10,7 @@ import apiClient from '@/api/client'
 import { formatDate } from '@/lib/utils'
 import type { Member } from '@/types/member'
 
-export function MemberProfile() {
+export function MemberProfilePage() {
   const { user } = useAuthStore()
   const { data: profile, isLoading, isError, refetch, isRefetching } = useQuery<Member>({
     queryKey: ['memberProfile'],
@@ -61,7 +61,7 @@ export function MemberProfile() {
                 {user?.name?.charAt(0).toUpperCase() || 'M'}
               </div>
               <h2 className="font-display text-xl font-semibold mb-1">{user?.name}</h2>
-              <p className="font-data text-warm-gold tracking-widest mb-4">{user?.memberId}</p>
+              <p className="font-data text-warm-gold tracking-widest mb-4">{user?.membershipNumber}</p>
               <Badge variant="active" className="bg-verdant-green text-white border-none">
                 {profile.status} Member
               </Badge>
@@ -83,7 +83,7 @@ export function MemberProfile() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 bg-white p-6 rounded-[6px] border border-ledger-rule shadow-paper">
               <div>
                 <p className="text-sm font-body text-mahogany-muted mb-1 flex items-center gap-1.5"><Phone className="h-4 w-4" /> Mobile</p>
-                <p className="font-data text-dark-mahogany font-medium">{user?.mobile}</p>
+                <p className="font-data text-dark-mahogany font-medium">{user?.mobileNumber}</p>
               </div>
               <div>
                 <p className="text-sm font-body text-mahogany-muted mb-1 flex items-center gap-1.5"><Mail className="h-4 w-4" /> Email</p>

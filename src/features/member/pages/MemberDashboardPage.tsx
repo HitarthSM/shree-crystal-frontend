@@ -15,7 +15,7 @@ import apiClient from '@/api/client'
 import { formatDistanceToNow, format } from 'date-fns'
 import type { MemberDashboardData } from '@/types/dashboard'
 
-export function MemberDashboard() {
+export function MemberDashboardPage() {
   const { user } = useAuthStore()
   const { data, isLoading, isError, refetch, isRefetching } = useQuery<MemberDashboardData>({
     queryKey: ['memberDashboard'],

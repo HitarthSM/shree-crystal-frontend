@@ -18,7 +18,7 @@ interface AxiosErrorResponse {
   }
 }
 
-export function AdminExport() {
+export function AdminExportPage() {
   const [exportType, setExportType] = useState<'members' | 'statements' | 'audit'>('members')
   const [format, setFormat] = useState<'csv' | 'json'>('csv')
   const [isExporting, setIsExporting] = useState(false)
@@ -27,7 +27,7 @@ export function AdminExport() {
     setIsExporting(true)
     try {
       if (exportType === 'audit') {
-        const response = await apiClient.get('/activity-log/export', { responseType: 'blob' })
+        const response = await apiClient.get('/audit-logs/export', { responseType: 'blob' })
         const blob = new Blob([response.data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
         downloadBlob(blob, `audit_logs_${new Date().toISOString().slice(0, 10)}.xlsx`)
       } else if (exportType === 'members') {
@@ -39,9 +39,9 @@ export function AdminExport() {
         } else {
           const headers = ['Member No', 'Full Name', 'Mobile', 'Status', 'Date of Joining', 'Address']
           const rows = items.map((m) => [
-            m.memberId || '',
+            m.membershipNumber || '',
             `"${(m.fullName || '').replace(/"/g, '""')}"`,
-            m.mobile || '',
+            m.mobileNumber || '',
             m.status || '',
             m.membershipDate ? new Date(m.membershipDate).toLocaleDateString() : '',
             `"${(m.addressLine1 || '').replace(/"/g, '""')}"`
@@ -60,7 +60,7 @@ export function AdminExport() {
           const headers = ['Period', 'Member ID', 'Category', 'Closing Balance', 'Status']
           const rows = items.map((s) => [
             s.period || '',
-            s.member?.memberId || s.memberId || '',
+            s.member?.membershipNumber || s.memberId || '',
             s.category || '',
             s.closingBalance || 0,
             s.status || ''

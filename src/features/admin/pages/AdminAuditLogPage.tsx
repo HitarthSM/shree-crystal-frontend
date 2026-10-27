@@ -13,22 +13,22 @@ import apiClient from '@/api/client'
 import { formatDistanceToNow } from 'date-fns'
 import { toast } from '@/components/ui/Toast'
 import { downloadBlob } from '@/lib/utils'
-import type { ActivityLogItem } from '@/types/activity'
+import type { AuditLogItem } from '@/types/audit-log'
 
-export function AdminActivity() {
+export function AdminAuditLogPage() {
   const [filterRole, setFilterRole] = useState('all')
   const [search, setSearch] = useState('')
 
-  const { data: logsData, isLoading, isError, refetch, isRefetching } = useQuery<{ items?: ActivityLogItem[]; data?: ActivityLogItem[] } | ActivityLogItem[]>({
+  const { data: logsData, isLoading, isError, refetch, isRefetching } = useQuery<{ items?: AuditLogItem[]; data?: AuditLogItem[] } | AuditLogItem[]>({
     queryKey: ['activity', { actorType: filterRole !== 'all' ? filterRole.toUpperCase() : undefined }],
-    queryFn: () => apiClient.get('/activity-log', { params: { actorType: filterRole !== 'all' ? filterRole.toUpperCase() : undefined } }).then(res => res.data)
+    queryFn: () => apiClient.get('/audit-logs', { params: { actorType: filterRole !== 'all' ? filterRole.toUpperCase() : undefined } }).then(res => res.data)
   })
   
   const exportMutation = useMutation({
-    mutationFn: (params: { actorType?: string }) => apiClient.get('/activity-log/export', { params, responseType: 'blob' })
+    mutationFn: (params: { actorType?: string }) => apiClient.get('/audit-logs/export', { params, responseType: 'blob' })
   })
 
-  const logs: ActivityLogItem[] = Array.isArray(logsData)
+  const logs: AuditLogItem[] = Array.isArray(logsData)
     ? logsData
     : logsData?.items || logsData?.data || []
   

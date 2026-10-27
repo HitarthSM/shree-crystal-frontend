@@ -3,7 +3,7 @@ import { createSyncStoragePersister } from '@tanstack/query-sync-storage-persist
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import { AppRouter } from './AppRouter'
 import { ToastProvider } from './components/ui/Toast'
-import { queryClient, WEB_QUERY_CACHE_KEY } from './api/queryClient'
+import { queryClient, WEB_QUERY_CACHE_KEY } from './api/query-client'
 
 const localStoragePersister = createSyncStoragePersister({
   storage: typeof window !== 'undefined' ? window.localStorage : undefined,

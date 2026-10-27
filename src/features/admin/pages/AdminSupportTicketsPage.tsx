@@ -5,36 +5,36 @@ import { Badge } from '@/components/ui/Badge'
 import { Select } from '@/components/ui/FormControls'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { ErrorState } from '@/components/ui/ErrorState'
-import { QueryChatThread } from '@/components/ui/QueryChatThread'
+import { SupportTicketThread } from '@/components/ui/SupportTicketThread'
 import { SkeletonRow } from '@/components/ui/Skeleton'
 import { MessageSquare } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import apiClient from '@/api/client'
 import { formatDistanceToNow } from 'date-fns'
 import { toast } from '@/components/ui/Toast'
-import type { SupportQuery } from '@/types/query'
+import type { SupportTicket } from '@/types/support-ticket'
 
-export function AdminQueries() {
+export function AdminSupportTicketsPage() {
   const [filterStatus, setFilterStatus] = useState<string>('OPEN')
   const [selectedQueryId, setSelectedQueryId] = useState<string | null>(null)
   const queryClient = useQueryClient()
 
-  const { data: queriesData, isLoading, isError, refetch, isRefetching } = useQuery<SupportQuery[]>({
+  const { data: queriesData, isLoading, isError, refetch, isRefetching } = useQuery<SupportTicket[]>({
     queryKey: ['adminQueries', filterStatus !== 'ALL' ? { status: filterStatus } : undefined],
-    queryFn: () => apiClient.get('/queries', { params: filterStatus !== 'ALL' ? { status: filterStatus } : undefined }).then(res => res.data)
+    queryFn: () => apiClient.get('/support-tickets', { params: filterStatus !== 'ALL' ? { status: filterStatus } : undefined }).then(res => res.data)
   })
   
-  const queries: SupportQuery[] = queriesData || []
+  const queries: SupportTicket[] = queriesData || []
 
-  const { data: selectedQuery, isLoading: isLoadingQuery } = useQuery<SupportQuery>({
+  const { data: selectedQuery, isLoading: isLoadingQuery } = useQuery<SupportTicket>({
     queryKey: ['adminQuery', selectedQueryId],
-    queryFn: () => apiClient.get(`/queries/${selectedQueryId}`).then(res => res.data),
+    queryFn: () => apiClient.get(`/support-tickets/${selectedQueryId}`).then(res => res.data),
     enabled: !!selectedQueryId,
   })
 
   const replyMutation = useMutation({
     mutationFn: ({ id, message, status }: { id: string; message: string; status?: string }) => 
-      apiClient.post(`/queries/${id}/reply`, { message, status }).then(res => res.data),
+      apiClient.post(`/support-tickets/${id}/reply`, { message, status }).then(res => res.data),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['adminQuery', variables.id] })
       queryClient.invalidateQueries({ queryKey: ['adminQueries'] })
@@ -109,7 +109,7 @@ export function AdminQueries() {
                     >
                       <LedgerRow
                         title={q.subject}
-                        subtitle={`${q.member?.fullName || 'Member'} (${q.member?.memberId || 'SC'})`}
+                        subtitle={`${q.member?.fullName || 'Member'} (${q.member?.membershipNumber || 'SC'})`}
                         date={q.updatedAt ? formatDistanceToNow(new Date(q.updatedAt), { addSuffix: true }) : 'Recent'}
                         className="px-4 py-3"
                         badge={<Badge variant={q.status === 'OPEN' ? 'pending' : 'resolved'}>{q.status}</Badge>}
@@ -130,7 +130,7 @@ export function AdminQueries() {
                 <div className="text-mahogany-muted font-body">Loading ticket thread...</div>
               </Card>
             ) : (
-              <QueryChatThread
+              <SupportTicketThread
                 query={selectedQuery}
                 currentUserRole="ADMIN"
                 onClose={() => setSelectedQueryId(null)}

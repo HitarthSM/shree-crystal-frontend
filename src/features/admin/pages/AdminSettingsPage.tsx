@@ -7,7 +7,7 @@ import { NotificationGatewayForm } from '../components/settings/NotificationGate
 import { SecurityPolicyForm } from '../components/settings/SecurityPolicyForm'
 import { BackupSettingsTab } from '../components/settings/BackupSettingsTab'
 
-export function AdminSettings() {
+export function AdminSettingsPage() {
   const [activeTab, setActiveTab] = useState<'society' | 'notifications' | 'security' | 'backup'>('society')
 
   return (

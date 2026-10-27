@@ -12,7 +12,7 @@ import { authApi } from '@/api/auth'
 import { useAuthStore, type UserRole } from '@/store/auth.store'
 
 const loginSchema = z.object({
-  memberId: z.string().min(1, 'Member ID is required'),
+  identifier: z.string().min(1, 'Member ID is required'),
   password: z.string().min(1, 'Password is required'),
 })
 
@@ -35,7 +35,7 @@ export function LoginPage() {
 
   const onSubmit = async (data: LoginForm) => {
     try {
-      const response = await authApi.login(data.memberId, data.password)
+      const response = await authApi.login(data.identifier, data.password)
       
       setTokens(response.accessToken, response.refreshToken)
       
@@ -50,9 +50,9 @@ export function LoginPage() {
 
       setUser({
         id: userProfile.id,
-        memberId: userProfile.memberId || userProfile.email,
+        membershipNumber: userProfile.membershipNumber || userProfile.email,
         name: userProfile.name || userProfile.fullName,
-        mobile: userProfile.mobile || '',
+        mobileNumber: userProfile.mobileNumber || '',
         email: userProfile.email,
         role,
         isFirstLogin: userProfile.isFirstLogin === true,
@@ -128,8 +128,8 @@ export function LoginPage() {
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             <Input
               label="Member ID / Mobile Number"
-              {...register('memberId')}
-              error={errors.memberId?.message}
+              {...register('identifier')}
+              error={errors.identifier?.message}
               placeholder="e.g., SC-00847 or 9876543210"
               autoComplete="username"
             />

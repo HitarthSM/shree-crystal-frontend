@@ -32,19 +32,19 @@ import { downloadBlob, cn } from '@/lib/utils'
 
 export interface ImportErrorItem {
   row: number
-  memberNo?: string
+  membershipNumber?: string
   fullName?: string
-  mobile?: string
+  mobileNumber?: string
   reasons: string[]
 }
 
 export interface ImportValidItem {
-  memberNo?: string
+  membershipNumber?: string
   fullName?: string
-  mobile?: string
+  mobileNumber?: string
   gender?: string
   city?: string
-  dob?: string
+  dateOfBirth?: string
 }
 
 export interface ImportBatchResponse {
@@ -64,7 +64,7 @@ interface AxiosErrorResponse {
   }
 }
 
-export function AdminMemberImport() {
+export function AdminMemberImportPage() {
   const navigate = useNavigate()
   const [step, setStep] = useState<1 | 2>(1)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -173,7 +173,7 @@ export function AdminMemberImport() {
     const headers = ['Row Number', 'Member ID / No', 'Full Name', 'Validation Errors']
     const rows = batchState.errorList.map((err) => [
       err.row,
-      `"${(err.memberNo || '').replace(/"/g, '""')}"`,
+      `"${(err.membershipNumber || '').replace(/"/g, '""')}"`,
       `"${(err.fullName || '').replace(/"/g, '""')}"`,
       `"${err.reasons.join('; ').replace(/"/g, '""')}"`,
     ])
@@ -207,7 +207,7 @@ export function AdminMemberImport() {
       const matchesSearch =
         !query ||
         String(err.row).includes(query) ||
-        (err.memberNo && err.memberNo.toLowerCase().includes(query)) ||
+        (err.membershipNumber && err.membershipNumber.toLowerCase().includes(query)) ||
         (err.fullName && err.fullName.toLowerCase().includes(query)) ||
         err.reasons.some((r) => r.toLowerCase().includes(query))
 
@@ -506,7 +506,7 @@ export function AdminMemberImport() {
                               #{err.row}
                             </TableCell>
                             <TableCell className="font-mono font-semibold text-dark-mahogany">
-                              {err.memberNo || `Row ${err.row}`}
+                              {err.membershipNumber || `Row ${err.row}`}
                             </TableCell>
                             <TableCell className="font-body text-sm font-medium text-dark-mahogany">
                               {err.fullName || '-'}
@@ -589,13 +589,13 @@ export function AdminMemberImport() {
                     {(batchState?.previewData || []).map((row, idx) => (
                       <TableRow key={idx}>
                         <TableCell className="font-mono font-semibold text-dark-mahogany">
-                          {row.memberNo || `Row ${idx + 1}`}
+                          {row.membershipNumber || `Row ${idx + 1}`}
                         </TableCell>
                         <TableCell className="font-medium text-dark-mahogany">
                           {row.fullName || '-'}
                         </TableCell>
                         <TableCell className="font-mono text-xs text-mahogany-muted">
-                          {row.mobile || '-'}
+                          {row.mobileNumber || '-'}
                         </TableCell>
                         <TableCell className="text-xs">{row.gender || '-'}</TableCell>
                         <TableCell className="text-xs">{row.city || '-'}</TableCell>

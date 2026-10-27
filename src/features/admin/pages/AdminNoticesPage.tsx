@@ -22,7 +22,7 @@ interface AxiosErrorResponse {
   }
 }
 
-export function AdminNotices() {
+export function AdminNoticesPage() {
   const [isDrafting, setIsDrafting] = useState(false)
   const [title, setTitle] = useState('')
   const [body, setBody] = useState('')

@@ -113,9 +113,9 @@ export interface TranslationSchema {
     members: string
     statements: string
     notices: string
-    websiteCms: string
-    queries: string
-    activity: string
+    websiteContent: string
+    supportTickets: string
+    auditLog: string
     settings: string
     exportData: string
     backupStatus: string
@@ -244,9 +244,9 @@ export const translations: Record<Language, TranslationSchema> = {
       members: 'Member List',
       statements: 'Monthly Statements',
       notices: 'Notices & Circulars',
-      websiteCms: 'Website Content',
-      queries: 'Member Inquiries',
-      activity: 'Activity History',
+      websiteContent: 'Website Content',
+      supportTickets: 'Support Tickets',
+      auditLog: 'Audit Log',
       settings: 'Society Settings',
       exportData: 'Export Society Data',
       backupStatus: 'Database Backup',
@@ -374,9 +374,9 @@ export const translations: Record<Language, TranslationSchema> = {
       members: 'સભ્યો',
       statements: 'સ્ટેટમેન્ટ્સ',
       notices: 'નોટિસો અને પરિપત્રો',
-      websiteCms: 'વેબસાઇટ મેનેજમેન્ટ',
-      queries: 'સહાય પ્રશ્નો',
-      activity: 'પ્રવૃત્તિ નોંધ (લૉગ)',
+      websiteContent: 'વેબસાઇટ મેનેજમેન્ટ',
+      supportTickets: 'સહાય પ્રશ્નો',
+      auditLog: 'પ્રવૃત્તિ નોંધ (લૉગ)',
       settings: 'સેટિંગ્સ',
       exportData: 'ડેટા નિકાસ (એક્સપોર્ટ)',
       backupStatus: 'બેકઅપ સ્થિતિ',

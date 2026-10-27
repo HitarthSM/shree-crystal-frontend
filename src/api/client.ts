@@ -1,5 +1,5 @@
 /// <reference types="vite/client" />
-import { clearUserData } from './queryClient'
+import { clearUserData } from './query-client'
 import axios, { type InternalAxiosRequestConfig } from 'axios'
 import { useAuthStore } from '../store/auth.store'
 

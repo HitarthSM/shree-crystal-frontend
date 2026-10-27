@@ -37,7 +37,7 @@ interface AxiosErrorResponse {
   }
 }
 
-export function AdminStatements() {
+export function AdminStatementsPage() {
   const [filter, setFilter] = useState('all')
   const [period, setPeriod] = useState('')
   const [category, setCategory] = useState<'Savings' | 'Loan'>('Savings')

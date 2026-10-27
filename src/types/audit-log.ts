@@ -1,4 +1,4 @@
-export interface ActivityLogItem {
+export interface AuditLogItem {
   id: string;
   action: string;
   actorType: 'ADMIN' | 'OPERATOR' | 'SYSTEM' | 'MEMBER';

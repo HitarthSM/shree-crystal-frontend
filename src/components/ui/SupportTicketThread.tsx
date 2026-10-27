@@ -5,17 +5,17 @@ import { Button } from './Button'
 import { Textarea } from './FormControls'
 import { CheckCircle2, X, Send } from 'lucide-react'
 import { format } from 'date-fns'
-import type { SupportQuery } from '@/types/query'
+import type { SupportTicket } from '@/types/support-ticket'
 
 export interface QueryChatThreadProps {
-  query: SupportQuery
+  query: SupportTicket
   currentUserRole: 'ADMIN' | 'MEMBER'
   onClose?: () => void
   onSendReply: (message: string, resolve?: boolean) => Promise<void>
   isSending?: boolean
 }
 
-export function QueryChatThread({
+export function SupportTicketThread({
   query,
   currentUserRole,
   onClose,
@@ -40,7 +40,7 @@ export function QueryChatThread({
           <CardTitle className="text-lg leading-tight mb-1">{query.subject}</CardTitle>
           <p className="text-sm text-mahogany-muted">
             {currentUserRole === 'ADMIN' && query.member
-              ? `Raised by ${query.member.fullName} (${query.member.memberId}) on `
+              ? `Raised by ${query.member.fullName} (${query.member.membershipNumber}) on `
               : 'Raised on '}
             {query.createdAt ? format(new Date(query.createdAt), 'dd MMM yyyy') : 'Recent'}
           </p>

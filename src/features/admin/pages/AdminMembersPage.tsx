@@ -21,7 +21,7 @@ import apiClient from '@/api/client'
 import { formatDate } from '@/lib/utils'
 import type { Member } from '@/types/member'
 
-export function AdminMembers() {
+export function AdminMembersPage() {
   const [searchTerm, setSearchTerm] = useState('')
 
   const { data, isLoading, isError } = useQuery<{ items?: Member[]; data?: Member[] } | Member[]>({
@@ -93,9 +93,9 @@ export function AdminMembers() {
               <TableBody>
                 {filteredMembers.map((member) => (
                   <TableRow key={member.id}>
-                    <TableCell className="pl-6 font-data font-medium">{member.memberId}</TableCell>
+                    <TableCell className="pl-6 font-data font-medium">{member.membershipNumber}</TableCell>
                     <TableCell className="font-medium">{member.fullName}</TableCell>
-                    <TableCell className="font-data text-mahogany-muted">{member.mobile}</TableCell>
+                    <TableCell className="font-data text-mahogany-muted">{member.mobileNumber}</TableCell>
                     <TableCell>
                       <Badge variant={member.status}>{member.status}</Badge>
                     </TableCell>

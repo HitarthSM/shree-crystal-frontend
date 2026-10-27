@@ -1,27 +1,27 @@
-export type QueryStatus = 'OPEN' | 'RESOLVED';
+export type TicketStatus = 'OPEN' | 'RESOLVED';
 export type SenderType = 'MEMBER' | 'ADMIN';
 
-export interface QueryMessage {
+export interface SupportTicketMessage {
   id: string;
-  queryId?: string;
+  ticketId?: string;
   senderType: SenderType;
   message: string;
   createdAt: string;
 }
 
-export interface SupportQuery {
+export interface SupportTicket {
   id: string;
   subject: string;
   category?: string;
-  status: QueryStatus;
+  status: TicketStatus;
   createdAt: string;
   updatedAt: string;
   memberId?: string;
   member?: {
     id: string;
-    memberId: string;
+    membershipNumber: string;
     fullName: string;
-    mobile?: string;
+    mobileNumber?: string;
   };
-  messages?: QueryMessage[];
+  messages?: SupportTicketMessage[];
 }

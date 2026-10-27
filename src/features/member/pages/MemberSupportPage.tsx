@@ -6,38 +6,38 @@ import { Select, Textarea, Input } from '@/components/ui/FormControls'
 import { Button } from '@/components/ui/Button'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { ErrorState } from '@/components/ui/ErrorState'
-import { QueryChatThread } from '@/components/ui/QueryChatThread'
+import { SupportTicketThread } from '@/components/ui/SupportTicketThread'
 import { SkeletonRow } from '@/components/ui/Skeleton'
 import { MessageSquare, PlusCircle } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import apiClient from '@/api/client'
 import { formatDistanceToNow } from 'date-fns'
 import { toast } from '@/components/ui/Toast'
-import type { SupportQuery } from '@/types/query'
+import type { SupportTicket } from '@/types/support-ticket'
 
-export function MemberSupport() {
+export function MemberSupportPage() {
   const [filterStatus, setFilterStatus] = useState<string>('OPEN')
   const [selectedQueryId, setSelectedQueryId] = useState<string | null>(null)
   const [isCreatingNew, setIsCreatingNew] = useState(false)
   const queryClient = useQueryClient()
 
-  const { data: queriesData, isLoading, isError, refetch, isRefetching } = useQuery<SupportQuery[]>({
+  const { data: queriesData, isLoading, isError, refetch, isRefetching } = useQuery<SupportTicket[]>({
     queryKey: ['memberQueries'],
-    queryFn: () => apiClient.get('/queries/me').then(r => r.data)
+    queryFn: () => apiClient.get('/support-tickets/me').then(r => r.data)
   })
   
-  const allQueries: SupportQuery[] = queriesData || []
+  const allQueries: SupportTicket[] = queriesData || []
   const queries = allQueries.filter((q) => filterStatus === 'ALL' || q.status === filterStatus)
 
-  const { data: selectedQuery, isLoading: isLoadingQuery } = useQuery<SupportQuery>({
+  const { data: selectedQuery, isLoading: isLoadingQuery } = useQuery<SupportTicket>({
     queryKey: ['memberQuery', selectedQueryId],
-    queryFn: () => apiClient.get(`/queries/me/${selectedQueryId}`).then(res => res.data),
+    queryFn: () => apiClient.get(`/support-tickets/me/${selectedQueryId}`).then(res => res.data),
     enabled: !!selectedQueryId,
   })
 
   const replyMutation = useMutation({
     mutationFn: ({ id, message }: { id: string; message: string }) =>
-      apiClient.post(`/queries/${id}/messages`, { message }).then(res => res.data),
+      apiClient.post(`/support-tickets/${id}/messages`, { message }).then(res => res.data),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['memberQuery', variables.id] })
       queryClient.invalidateQueries({ queryKey: ['memberQueries'] })
@@ -152,7 +152,7 @@ export function MemberSupport() {
                 <div className="text-mahogany-muted font-body">Loading inquiry details...</div>
               </Card>
             ) : (
-              <QueryChatThread
+              <SupportTicketThread
                 query={selectedQuery}
                 currentUserRole="MEMBER"
                 onClose={() => setSelectedQueryId(null)}
@@ -188,7 +188,7 @@ function NewTicketForm({
 
   const createMutation = useMutation({
     mutationFn: (payload: { subject: string; category: string; message: string }) =>
-      apiClient.post('/queries', payload).then((r) => r.data),
+      apiClient.post('/support-tickets', payload).then((r) => r.data),
     onSuccess: (data) => {
       qc.invalidateQueries({ queryKey: ['memberQueries'] })
       toast.success('Your question has been sent to the society office.')

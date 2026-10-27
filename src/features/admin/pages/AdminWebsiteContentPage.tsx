@@ -18,7 +18,7 @@ interface ContactInfo {
   address?: string
 }
 
-export function AdminWebsiteCMS() {
+export function AdminWebsiteContentPage() {
   const queryClient = useQueryClient()
   const [aboutUsText, setAboutUsText] = useState('')
   const [visionText, setVisionText] = useState('')

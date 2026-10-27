@@ -11,7 +11,7 @@ import apiClient from '@/api/client'
 import { formatDate } from '@/lib/utils'
 import type { Notice } from '@/types/notice'
 
-export function PublicNotices() {
+export function PublicNoticesPage() {
   const { data: noticesData, isLoading, isError, refetch, isRefetching } = useQuery<{ items?: Notice[]; data?: Notice[] } | Notice[]>({
     queryKey: ['publicNotices'],
     queryFn: () => apiClient.get('/notices').then(res => res.data)

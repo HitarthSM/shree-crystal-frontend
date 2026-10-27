@@ -13,7 +13,7 @@ import { Link } from 'react-router-dom'
 import type { Member } from '@/types/member'
 import type { StatementItem } from '@/types/statement'
 
-export function AdminMemberDetail() {
+export function AdminMemberDetailPage() {
   const { id } = useParams<{ id: string }>()
   
   const { data: member, isLoading, isError } = useQuery<Member>({
@@ -23,9 +23,9 @@ export function AdminMemberDetail() {
   })
 
   const { data: statementsData } = useQuery<{ data?: StatementItem[]; items?: StatementItem[] } | StatementItem[]>({
-    queryKey: ['memberStatements', member?.memberId],
-    queryFn: () => apiClient.get('/statements', { params: { memberId: member?.memberId } }).then(res => res.data),
-    enabled: !!member?.memberId,
+    queryKey: ['memberStatements', member?.membershipNumber],
+    queryFn: () => apiClient.get('/statements', { params: { membershipNumber: member?.membershipNumber } }).then(res => res.data),
+    enabled: !!member?.membershipNumber,
   })
 
   if (isLoading) {
@@ -58,7 +58,7 @@ export function AdminMemberDetail() {
       <PageHeader
         backLink={{ to: '/admin/members', label: 'Back to Directory' }}
         title={member.fullName}
-        description={`${member.memberId} • Joined ${member.createdAt ? formatDate(member.createdAt) : 'N/A'}`}
+        description={`${member.membershipNumber} • Joined ${member.createdAt ? formatDate(member.createdAt) : 'N/A'}`}
         badge={<Badge variant={member.status}>{member.status}</Badge>}
         actions={
           <div className="flex gap-3">
@@ -82,7 +82,7 @@ export function AdminMemberDetail() {
             <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6 p-0">
               <div>
                 <p className="text-xs font-body text-mahogany-muted uppercase tracking-wider mb-1">Mobile</p>
-                <p className="font-body font-medium text-dark-mahogany">{member.mobile}</p>
+                <p className="font-body font-medium text-dark-mahogany">{member.mobileNumber}</p>
               </div>
               <div>
                 <p className="text-xs font-body text-mahogany-muted uppercase tracking-wider mb-1">Email</p>

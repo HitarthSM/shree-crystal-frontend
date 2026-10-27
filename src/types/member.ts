@@ -3,17 +3,17 @@ export type Gender = 'MALE' | 'FEMALE' | 'OTHER';
 
 export interface Member {
   id: string;
-  memberId: string;
+  membershipNumber: string;
   fullName: string;
   fatherOrHusbandName?: string | null;
-  dob: string; // ISO Date string
+  dateOfBirth: string; // ISO Date string
   gender: Gender;
   addressLine1: string;
   addressLine2?: string | null;
   city: string;
   state: string;
   pincode: string;
-  mobile: string;
+  mobileNumber: string;
   email?: string | null;
   photoUrl?: string | null;
   nomineeName?: string | null;
@@ -63,14 +63,14 @@ export interface PaginatedResponse<T> {
 export interface CreateMemberPayload {
   fullName: string;
   fatherOrHusbandName?: string;
-  dob: string;
+  dateOfBirth: string;
   gender: Gender;
   addressLine1: string;
   addressLine2?: string;
   city: string;
   state: string;
   pincode: string;
-  mobile: string;
+  mobileNumber: string;
   email?: string;
   aadhaar: string;
   pan?: string;

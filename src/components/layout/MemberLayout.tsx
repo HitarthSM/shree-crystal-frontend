@@ -49,7 +49,7 @@ export function MemberLayout() {
 
             <div className="text-right hidden sm:block">
               <p className="font-body font-medium text-ivory text-sm">{user?.name || 'Member'}</p>
-              <p className="font-data text-xs text-ivory/60">{user?.memberId || 'SC-00000'}</p>
+              <p className="font-data text-xs text-ivory/60">{user?.membershipNumber || 'SC-00000'}</p>
             </div>
             
             <button 

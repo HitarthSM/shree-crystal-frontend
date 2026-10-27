@@ -31,7 +31,7 @@ interface AxiosErrorResponse {
   }
 }
 
-export function AdminDashboard() {
+export function AdminDashboardPage() {
   const queryClient = useQueryClient()
   
   // Modal state for Approval and Rejection
@@ -209,7 +209,7 @@ export function AdminDashboard() {
         <Card padding="none">
           <CardHeader className="p-6 pb-4 border-b border-ledger-rule flex justify-between items-center">
             <CardTitle className="text-lg">Recent Society Activity</CardTitle>
-            <Link to="/admin/activity" className="text-sm font-medium text-warm-gold hover:text-warm-gold-hover">
+            <Link to="/admin/audit-log" className="text-sm font-medium text-warm-gold hover:text-warm-gold-hover">
               View Full History
             </Link>
           </CardHeader>

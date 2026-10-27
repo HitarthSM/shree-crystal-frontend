@@ -15,7 +15,7 @@ interface MemberNoticeDelivery {
   notice: Notice
 }
 
-export function MemberNotices() {
+export function MemberNoticesPage() {
   const { data: notices, isLoading, isError, refetch, isRefetching } = useQuery<MemberNoticeDelivery[]>({
     queryKey: ['memberNotices'],
     queryFn: () => apiClient.get('/notices/me').then(r => r.data)

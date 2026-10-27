@@ -32,7 +32,7 @@ interface AxiosErrorResponse {
   }
 }
 
-export function AdminBackup() {
+export function AdminBackupPage() {
   const queryClient = useQueryClient()
   const [isVerifying, setIsVerifying] = useState(false)
 

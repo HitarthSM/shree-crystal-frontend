@@ -14,7 +14,7 @@ import { toast } from '@/components/ui/Toast'
 import { downloadBlob, formatDate } from '@/lib/utils'
 import type { StatementItem } from '@/types/statement'
 
-export function MemberStatements() {
+export function MemberStatementsPage() {
   const [filterType, setFilterType] = useState('all')
 
   const { data: statementsData, isLoading, isError, refetch, isRefetching } = useQuery<{ data?: StatementItem[] } | StatementItem[]>({

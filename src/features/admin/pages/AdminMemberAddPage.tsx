@@ -14,9 +14,9 @@ const memberSchema = z.object({
   fullName: z.string().min(3, "Name must be at least 3 characters"),
   fatherOrHusbandName: z.string().optional(),
   gender: z.enum(['MALE', 'FEMALE', 'OTHER']),
-  mobile: z.string().regex(/^[0-9]{10}$/, "Invalid 10-digit mobile number"),
+  mobileNumber: z.string().regex(/^[0-9]{10}$/, "Invalid 10-digit mobile number"),
   email: z.string().email("Invalid email address").optional().or(z.literal('')),
-  dob: z.string().refine((val) => {
+  dateOfBirth: z.string().refine((val) => {
     const age = (new Date().getTime() - new Date(val).getTime()) / (365.25 * 24 * 60 * 60 * 1000)
     return age >= 18
   }, "Member must be at least 18 years old"),
@@ -46,7 +46,7 @@ interface AxiosErrorResponse {
   }
 }
 
-export function AdminMemberAdd() {
+export function AdminMemberAddPage() {
   const navigate = useNavigate()
   const createMember = useMutation({
     mutationFn: (data: CreateMemberPayload) => apiClient.post('/members', data).then(res => res.data)
@@ -62,8 +62,8 @@ export function AdminMemberAdd() {
         fullName: data.fullName,
         fatherOrHusbandName: data.fatherOrHusbandName || undefined,
         gender: data.gender,
-        dob: data.dob,
-        mobile: data.mobile,
+        dateOfBirth: data.dateOfBirth,
+        mobileNumber: data.mobileNumber,
         email: data.email || undefined,
         addressLine1: data.addressLine1,
         addressLine2: data.addressLine2 || undefined,
@@ -114,8 +114,8 @@ export function AdminMemberAdd() {
             <Input 
               label="Date of Birth" 
               type="date" 
-              {...register('dob')} 
-              error={errors.dob?.message}
+              {...register('dateOfBirth')} 
+              error={errors.dateOfBirth?.message}
             />
             <Select
               label="Gender"
@@ -131,8 +131,8 @@ export function AdminMemberAdd() {
             <Input 
               label="Mobile Number" 
               placeholder="10-digit mobile number" 
-              {...register('mobile')} 
-              error={errors.mobile?.message}
+              {...register('mobileNumber')} 
+              error={errors.mobileNumber?.message}
             />
             <Input 
               label="Email Address (Optional)" 

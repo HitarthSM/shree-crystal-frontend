@@ -11,7 +11,7 @@ export interface StatementItem {
   memberId?: string;
   member?: {
     id: string;
-    memberId: string;
+    membershipNumber: string;
     fullName: string;
   };
 }

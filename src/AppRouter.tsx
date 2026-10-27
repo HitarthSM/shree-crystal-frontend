@@ -10,7 +10,7 @@ import { RequireAuth } from './components/layout/RequireAuth'
 // Pages - Public & Auth
 import { LandingPage } from './features/public/pages/LandingPage'
 
-import { PublicNotices } from './features/public/pages/PublicNotices'
+import { PublicNoticesPage } from './features/public/pages/PublicNoticesPage'
 import { LoginPage } from './features/auth/pages/LoginPage'
 import { AboutPage } from './features/public/pages/AboutPage'
 import { ContactPage } from './features/public/pages/ContactPage'
@@ -18,26 +18,26 @@ import { PrivacyPage } from './features/public/pages/PrivacyPage'
 import { TermsPage } from './features/public/pages/TermsPage'
 
 // Pages - Member
-import { MemberDashboard } from './features/member/pages/MemberDashboard'
-import { MemberStatements } from './features/member/pages/MemberStatements'
-import { MemberNotices } from './features/member/pages/MemberNotices'
-import { MemberProfile } from './features/member/pages/MemberProfile'
-import { MemberSupport } from './features/member/pages/MemberSupport'
+import { MemberDashboardPage } from './features/member/pages/MemberDashboardPage'
+import { MemberStatementsPage } from './features/member/pages/MemberStatementsPage'
+import { MemberNoticesPage } from './features/member/pages/MemberNoticesPage'
+import { MemberProfilePage } from './features/member/pages/MemberProfilePage'
+import { MemberSupportPage } from './features/member/pages/MemberSupportPage'
 
 // Pages - Admin
-import { AdminDashboard } from './features/admin/pages/AdminDashboard'
-import { AdminMembers } from './features/admin/pages/AdminMembers'
-import { AdminMemberDetail } from './features/admin/pages/AdminMemberDetail'
-import { AdminMemberAdd } from './features/admin/pages/AdminMemberAdd'
-import { AdminMemberImport } from './features/admin/pages/AdminMemberImport'
-import { AdminStatements } from './features/admin/pages/AdminStatements'
-import { AdminNotices } from './features/admin/pages/AdminNotices'
-import { AdminActivity } from './features/admin/pages/AdminActivity'
-import { AdminSettings } from './features/admin/pages/AdminSettings'
-import { AdminWebsiteCMS } from './features/admin/pages/AdminWebsiteCMS'
-import { AdminQueries } from './features/admin/pages/AdminQueries'
-import { AdminExport } from './features/admin/pages/AdminExport'
-import { AdminBackup } from './features/admin/pages/AdminBackup'
+import { AdminDashboardPage } from './features/admin/pages/AdminDashboardPage'
+import { AdminMembersPage } from './features/admin/pages/AdminMembersPage'
+import { AdminMemberDetailPage } from './features/admin/pages/AdminMemberDetailPage'
+import { AdminMemberAddPage } from './features/admin/pages/AdminMemberAddPage'
+import { AdminMemberImportPage } from './features/admin/pages/AdminMemberImportPage'
+import { AdminStatementsPage } from './features/admin/pages/AdminStatementsPage'
+import { AdminNoticesPage } from './features/admin/pages/AdminNoticesPage'
+import { AdminAuditLogPage } from './features/admin/pages/AdminAuditLogPage'
+import { AdminSettingsPage } from './features/admin/pages/AdminSettingsPage'
+import { AdminWebsiteContentPage } from './features/admin/pages/AdminWebsiteContentPage'
+import { AdminSupportTicketsPage } from './features/admin/pages/AdminSupportTicketsPage'
+import { AdminExportPage } from './features/admin/pages/AdminExportPage'
+import { AdminBackupPage } from './features/admin/pages/AdminBackupPage'
 
 const router = createBrowserRouter([
   // Public Routes
@@ -48,7 +48,7 @@ const router = createBrowserRouter([
       { index: true, element: <LandingPage /> },
       { path: 'login', element: <LoginPage /> },
       { path: 'about', element: <AboutPage /> },
-      { path: 'notices', element: <PublicNotices /> },
+      { path: 'notices', element: <PublicNoticesPage /> },
       { path: 'contact', element: <ContactPage /> },
       { path: 'privacy', element: <PrivacyPage /> },
       { path: 'terms', element: <TermsPage /> },
@@ -70,11 +70,11 @@ const router = createBrowserRouter([
       {
         element: <MemberLayout />,
         children: [
-          { index: true, element: <MemberDashboard /> },
-          { path: 'statements', element: <MemberStatements /> },
-          { path: 'notices', element: <MemberNotices /> },
-          { path: 'profile', element: <MemberProfile /> },
-          { path: 'support', element: <MemberSupport /> },
+          { index: true, element: <MemberDashboardPage /> },
+          { path: 'statements', element: <MemberStatementsPage /> },
+          { path: 'notices', element: <MemberNoticesPage /> },
+          { path: 'profile', element: <MemberProfilePage /> },
+          { path: 'support', element: <MemberSupportPage /> },
         ],
       },
     ],
@@ -88,20 +88,19 @@ const router = createBrowserRouter([
       {
         element: <AdminLayout />,
         children: [
-          { index: true, element: <AdminDashboard /> },
-          { path: 'members', element: <AdminMembers /> },
-          { path: 'members/add', element: <AdminMemberAdd /> },
-          { path: 'members/import', element: <AdminMemberImport /> },
-          { path: 'members/:id', element: <AdminMemberDetail /> },
-          { path: 'statements', element: <AdminStatements /> },
-          { path: 'notices', element: <AdminNotices /> },
-          { path: 'website-cms', element: <AdminWebsiteCMS /> },
-          { path: 'queries', element: <AdminQueries /> },
-          { path: 'support', element: <AdminQueries /> },
-          { path: 'activity', element: <AdminActivity /> },
-          { path: 'settings', element: <AdminSettings /> },
-          { path: 'export', element: <AdminExport /> },
-          { path: 'backup', element: <AdminBackup /> },
+          { index: true, element: <AdminDashboardPage /> },
+          { path: 'members', element: <AdminMembersPage /> },
+          { path: 'members/add', element: <AdminMemberAddPage /> },
+          { path: 'members/import', element: <AdminMemberImportPage /> },
+          { path: 'members/:id', element: <AdminMemberDetailPage /> },
+          { path: 'statements', element: <AdminStatementsPage /> },
+          { path: 'notices', element: <AdminNoticesPage /> },
+          { path: 'website-content', element: <AdminWebsiteContentPage /> },
+          { path: 'support-tickets', element: <AdminSupportTicketsPage /> },
+          { path: 'audit-log', element: <AdminAuditLogPage /> },
+          { path: 'settings', element: <AdminSettingsPage /> },
+          { path: 'export', element: <AdminExportPage /> },
+          { path: 'backup', element: <AdminBackupPage /> },
         ],
       },
     ],

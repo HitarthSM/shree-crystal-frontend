@@ -1,4 +1,4 @@
-import { clearUserData } from './queryClient'
+import { clearUserData } from './query-client'
 import apiClient from './client'
 import { useAuthStore } from '@/store/auth.store'
 

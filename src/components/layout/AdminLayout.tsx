@@ -57,9 +57,9 @@ export function AdminLayout() {
     { to: '/admin/members', icon: Users, label: t.adminNav.members },
     { to: '/admin/statements', icon: FileText, label: t.adminNav.statements },
     { to: '/admin/notices', icon: Bell, label: t.adminNav.notices },
-    { to: '/admin/website-cms', icon: LayoutDashboard, label: t.adminNav.websiteCms },
-    { to: '/admin/queries', icon: MessageSquare, label: t.adminNav.queries },
-    { to: '/admin/activity', icon: Activity, label: t.adminNav.activity },
+    { to: '/admin/website-content', icon: LayoutDashboard, label: t.adminNav.websiteContent },
+    { to: '/admin/support-tickets', icon: MessageSquare, label: t.adminNav.supportTickets },
+    { to: '/admin/audit-log', icon: Activity, label: t.adminNav.auditLog },
     { to: '/admin/settings', icon: Settings, label: t.adminNav.settings },
   ]
 
@@ -183,9 +183,9 @@ export function AdminLayout() {
               {location.pathname.startsWith('/admin/members') ? t.adminNav.members :
                location.pathname.startsWith('/admin/statements') ? t.adminNav.statements :
                location.pathname.startsWith('/admin/notices') ? t.adminNav.notices :
-               location.pathname.startsWith('/admin/website-cms') ? t.adminNav.websiteCms :
-               location.pathname.startsWith('/admin/queries') ? t.adminNav.queries :
-               location.pathname.startsWith('/admin/activity') ? t.adminNav.activity :
+               location.pathname.startsWith('/admin/website-content') ? t.adminNav.websiteContent :
+               location.pathname.startsWith('/admin/support-tickets') ? t.adminNav.supportTickets :
+               location.pathname.startsWith('/admin/audit-log') ? t.adminNav.auditLog :
                location.pathname.startsWith('/admin/settings') ? t.adminNav.settings :
                location.pathname.startsWith('/admin/export') ? t.adminNav.exportData :
                location.pathname.startsWith('/admin/backup') ? t.adminNav.backupStatus :

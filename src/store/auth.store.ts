@@ -5,9 +5,9 @@ export type UserRole = 'member' | 'admin' | 'super_admin' | 'operator' | 'viewer
 
 export interface AuthUser {
   id: string
-  memberId: string
+  membershipNumber: string
   name: string
-  mobile: string
+  mobileNumber: string
   email?: string
   role: UserRole
   /** True while the account still has the society-issued initial password. */
@@ -50,6 +50,7 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: 'auth-storage', // key in localStorage
+      version: 2, // v2 renamed AuthUser.memberId/mobile; older persisted sessions are discarded
     }
   )
 )
