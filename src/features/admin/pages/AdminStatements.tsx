@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { Select, Input } from '@/components/ui/FormControls'
 import { PageHeader } from '@/components/ui/PageHeader'
+import { ErrorState } from '@/components/ui/ErrorState'
 import { Stepper } from '@/components/ui/Stepper'
 import { SkeletonRow } from '@/components/ui/Skeleton'
 import { Upload, CheckCircle2 } from 'lucide-react'
@@ -46,9 +47,9 @@ export function AdminStatements() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   
   const queryClient = useQueryClient()
-  const { data: batchesData, isLoading } = useQuery<{ data?: BatchRecord[] } | BatchRecord[]>({
+  const { data: batchesData, isLoading, isError, refetch, isRefetching } = useQuery<{ data?: BatchRecord[] } | BatchRecord[]>({
     queryKey: ['batches', filter],
-    queryFn: () => apiClient.get('/statements/batches', { params: filter !== 'all' ? { status: filter.toUpperCase() } : undefined }).then(res => res.data)
+    queryFn: () => apiClient.get('/statements/batches', { params: filter !== 'all' ? { status: filter === 'draft' ? 'PENDING' : filter.toUpperCase() } : undefined }).then(res => res.data)
   })
   const batches: BatchRecord[] = Array.isArray(batchesData)
     ? batchesData
@@ -207,6 +208,13 @@ export function AdminStatements() {
                 <SkeletonRow />
                 <SkeletonRow />
               </div>
+            ) : isError ? (
+              <ErrorState
+                className="m-4"
+                title="Couldn't load statement batches"
+                onRetry={() => refetch()}
+                isRetrying={isRefetching}
+              />
             ) : batches.length === 0 ? (
               <div className="p-8 text-center text-mahogany-muted font-body">No batch history found.</div>
             ) : (

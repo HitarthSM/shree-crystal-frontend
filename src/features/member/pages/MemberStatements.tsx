@@ -4,6 +4,7 @@ import { LedgerRow } from '@/components/ui/LedgerRow'
 import { Badge } from '@/components/ui/Badge'
 import { Select } from '@/components/ui/FormControls'
 import { EmptyState } from '@/components/ui/EmptyState'
+import { ErrorState } from '@/components/ui/ErrorState'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { SkeletonRow } from '@/components/ui/Skeleton'
 import { Download, Printer } from 'lucide-react'
@@ -16,7 +17,7 @@ import type { StatementItem } from '@/types/statement'
 export function MemberStatements() {
   const [filterType, setFilterType] = useState('all')
 
-  const { data: statementsData, isLoading } = useQuery<{ data?: StatementItem[] } | StatementItem[]>({
+  const { data: statementsData, isLoading, isError, refetch, isRefetching } = useQuery<{ data?: StatementItem[] } | StatementItem[]>({
     queryKey: ['memberStatements'],
     queryFn: () => apiClient.get('/statements/me').then(r => r.data)
   })
@@ -49,8 +50,8 @@ export function MemberStatements() {
   return (
     <div className="space-y-8 animate-fade-slide-up">
       <PageHeader
-        title="My Passbook Statements"
-        description="View and download your official monthly passbook statements."
+        title="My Statements"
+        description="View and download the statements the society has published for you."
         actions={
           <div className="w-full sm:w-64">
             <Select
@@ -76,7 +77,7 @@ export function MemberStatements() {
           </div>
           <button
             onClick={() => window.print()}
-            className="text-sm font-body text-mahogany-muted hover:text-dark-mahogany transition-colors flex items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-warm-gold rounded-sm px-2 py-1 cursor-pointer"
+            className="text-sm font-body text-mahogany-muted hover:text-dark-mahogany transition-colors flex items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-warm-gold rounded-sm min-h-[44px] min-w-[44px] px-3 py-2 cursor-pointer"
           >
             <Printer className="h-4 w-4" />
             <span className="hidden sm:inline">Print Statement List</span>
@@ -90,6 +91,13 @@ export function MemberStatements() {
               <SkeletonRow />
               <SkeletonRow />
             </div>
+          ) : isError ? (
+            <ErrorState
+              className="m-6"
+              title="Couldn't load your statements"
+              onRetry={() => refetch()}
+              isRetrying={isRefetching}
+            />
           ) : filteredStatements.length > 0 ? (
             <div className="divide-y divide-ledger-rule">
               {filteredStatements.map((stmt) => (
@@ -106,7 +114,7 @@ export function MemberStatements() {
                       onClick={() => handleDownload(stmt.id, stmt.period)}
                       disabled={downloadMutation.isPending}
                       aria-label={`Download statement for ${stmt.period}`}
-                      className="p-2 text-mahogany-muted hover:text-warm-gold hover:bg-warm-gold/10 rounded-sm transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-warm-gold"
+                      className="flex min-h-[44px] min-w-[44px] items-center justify-center text-mahogany-muted hover:text-warm-gold hover:bg-warm-gold/10 rounded-sm transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-warm-gold"
                     >
                       <Download className="h-4 w-4" />
                     </button>

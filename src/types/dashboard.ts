@@ -17,7 +17,7 @@ export interface AdminDashboardData {
     totalActiveMembers: number;
     pendingApprovalsCount: number;
     totalLoanDisbursed: number;
-    activeDeposits: number;
+    totalShareCapital: number;
   };
   pendingApprovals: PendingApproval[];
   recentActivity: {
@@ -53,11 +53,8 @@ export interface MemberDashboardData {
   latestLoan?: {
     id: string;
     type?: string;
-    principalAmount?: number;
-    outstandingAmount?: number;
-    outstandingPrincipal?: number;
-    emiAmount?: number;
-    nextEmiDate?: string;
+    principalAmount?: string | number | null;
+    outstandingAmount?: string | number | null;
     createdAt?: string;
   };
   latestStatement?: {

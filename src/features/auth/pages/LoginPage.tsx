@@ -70,8 +70,17 @@ export function LoginPage() {
       navigate(from, { replace: true })
       
     } catch (error: unknown) {
-      if (isAxiosError(error) && (error.response?.status === 401 || error.response?.status === 400)) {
-        toast.error('Invalid Member ID or password.')
+      // Never leave tokens behind from a login that did not finish.
+      useAuthStore.getState().clearUser()
+      if (isAxiosError(error) && error.response?.status === 429) {
+        toast.error('Too many attempts. Please wait a minute and try again.')
+      } else if (isAxiosError(error) && (error.response?.status === 401 || error.response?.status === 400)) {
+        const serverMessage = (error.response.data as { message?: unknown } | undefined)?.message
+        toast.error(
+          typeof serverMessage === 'string' && /locked|not active/i.test(serverMessage)
+            ? serverMessage
+            : 'Invalid Member ID or password.',
+        )
       } else {
         toast.error('An error occurred during login. Please try again.')
       }

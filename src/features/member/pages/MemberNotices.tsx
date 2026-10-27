@@ -1,6 +1,7 @@
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import { PageHeader } from '@/components/ui/PageHeader'
+import { ErrorState } from '@/components/ui/ErrorState'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { SkeletonRow } from '@/components/ui/Skeleton'
 import { useQuery } from '@tanstack/react-query'
@@ -15,7 +16,7 @@ interface MemberNoticeDelivery {
 }
 
 export function MemberNotices() {
-  const { data: notices, isLoading } = useQuery<MemberNoticeDelivery[]>({
+  const { data: notices, isLoading, isError, refetch, isRefetching } = useQuery<MemberNoticeDelivery[]>({
     queryKey: ['memberNotices'],
     queryFn: () => apiClient.get('/notices/me').then(r => r.data)
   })
@@ -38,7 +39,14 @@ export function MemberNotices() {
               <SkeletonRow />
               <SkeletonRow />
             </div>
-          ) : notices && notices.length > 0 ? (
+          ) : isError ? (
+              <ErrorState
+                className="m-4"
+                title="Couldn't load your notices"
+                onRetry={() => refetch()}
+                isRetrying={isRefetching}
+              />
+            ) : notices && notices.length > 0 ? (
             <div className="divide-y divide-ledger-rule">
               {notices.map((delivery) => (
                 <div key={delivery.id} className={`p-6 transition-colors ${delivery.status !== 'DELIVERED' ? 'bg-deep-saffron/5' : ''}`}>

@@ -2,6 +2,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 import { LedgerRow } from '@/components/ui/LedgerRow'
 import { Badge } from '@/components/ui/Badge'
 import { PageHeader } from '@/components/ui/PageHeader'
+import { ErrorState } from '@/components/ui/ErrorState'
 import { SkeletonRow } from '@/components/ui/Skeleton'
 import { Bell, Calendar, FileText } from 'lucide-react'
 import { Link } from 'react-router-dom'
@@ -11,7 +12,7 @@ import { formatDate } from '@/lib/utils'
 import type { Notice } from '@/types/notice'
 
 export function PublicNotices() {
-  const { data: noticesData, isLoading } = useQuery<{ items?: Notice[]; data?: Notice[] } | Notice[]>({
+  const { data: noticesData, isLoading, isError, refetch, isRefetching } = useQuery<{ items?: Notice[]; data?: Notice[] } | Notice[]>({
     queryKey: ['publicNotices'],
     queryFn: () => apiClient.get('/notices').then(res => res.data)
   })
@@ -42,7 +43,14 @@ export function PublicNotices() {
               <SkeletonRow />
               <SkeletonRow />
             </div>
-          ) : notices.length === 0 ? (
+          ) : isError ? (
+              <ErrorState
+                className="m-4"
+                title="Couldn't load notices"
+                onRetry={() => refetch()}
+                isRetrying={isRefetching}
+              />
+            ) : notices.length === 0 ? (
             <div className="p-8 text-center text-mahogany-muted font-body">No public notices available.</div>
           ) : (
             <div className="divide-y divide-ledger-rule">

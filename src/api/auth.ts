@@ -1,3 +1,4 @@
+import { clearUserData } from './queryClient'
 import apiClient from './client'
 import { useAuthStore } from '@/store/auth.store'
 
@@ -43,9 +44,5 @@ export async function signOut(): Promise<void> {
     // Token may already be expired/invalidated — local sign-out must still succeed.
   }
   useAuthStore.getState().clearUser()
-  try {
-    window.localStorage.removeItem('SHREE_CRYSTAL_WEB_QUERY_CACHE')
-  } catch {
-    // Ignore storage clear failure
-  }
+  clearUserData()
 }

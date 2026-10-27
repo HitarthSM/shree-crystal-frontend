@@ -2,13 +2,14 @@ import { Link } from 'react-router-dom'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 import { LedgerRow } from '@/components/ui/LedgerRow'
 import { Badge } from '@/components/ui/Badge'
-import { Button, LinkButton } from '@/components/ui/Button'
+import { LinkButton } from '@/components/ui/Button'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { SkeletonCard } from '@/components/ui/Skeleton'
+import { ErrorState } from '@/components/ui/ErrorState'
 import { formatINR } from '@/lib/utils'
 import { useAuthStore } from '@/store/auth.store'
-import { Download, AlertCircle } from 'lucide-react'
+import { Download } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import apiClient from '@/api/client'
 import { formatDistanceToNow, format } from 'date-fns'
@@ -16,7 +17,7 @@ import type { MemberDashboardData } from '@/types/dashboard'
 
 export function MemberDashboard() {
   const { user } = useAuthStore()
-  const { data, isLoading } = useQuery<MemberDashboardData>({
+  const { data, isLoading, isError, refetch, isRefetching } = useQuery<MemberDashboardData>({
     queryKey: ['memberDashboard'],
     queryFn: () => apiClient.get('/members/me/dashboard').then(res => res.data)
   })
@@ -47,6 +48,17 @@ export function MemberDashboard() {
     )
   }
 
+  if (isError) {
+    return (
+      <ErrorState
+        title="Couldn't load your account summary"
+        description="We could not reach the server. Your balance is not shown until it loads."
+        onRetry={() => refetch()}
+        isRetrying={isRefetching}
+      />
+    )
+  }
+
   const { latestLoan, latestStatement, recentNotices, openQueryCount = 0 } = data || {}
 
   return (
@@ -71,31 +83,22 @@ export function MemberDashboard() {
                     <div>
                       <p className="text-sm font-body text-mahogany-muted mb-1">{latestLoan.type || 'Personal Loan'} • {latestLoan.id}</p>
                       <p className="font-data text-[2.5rem] leading-none text-warm-gold font-medium">
-                        {formatINR(latestLoan.outstandingPrincipal || 0)}
+                        {formatINR(latestLoan.outstandingAmount)}
                       </p>
                       <p className="text-sm font-body text-dark-mahogany mt-2">Remaining Loan Balance</p>
                     </div>
-                    <div className="bg-ivory-darker rounded-[4px] p-4 min-w-[200px]">
-                      <p className="text-sm font-body text-mahogany-muted mb-1">Next Monthly EMI Due</p>
-                      <p className="font-data text-lg text-dark-mahogany mb-1">{formatINR(latestLoan.emiAmount || 0)}</p>
-                      <p className="font-data text-sm text-deep-crimson flex items-center gap-1.5">
-                        <AlertCircle className="h-3 w-3" />
-                        Due on {latestLoan.nextEmiDate ? format(new Date(latestLoan.nextEmiDate), 'dd MMM yyyy') : 'TBD'}
-                      </p>
-                    </div>
+                    <p className="text-sm font-body text-mahogany-muted max-w-xs">
+                      Your repayment schedule will appear here once it is available. Until then,
+                      pay using the society&apos;s payment details.
+                    </p>
                   </div>
 
-                  <div className="pt-6 flex gap-4">
-                    <Button variant="primary">Pay EMI Online</Button>
-                    <Button variant="secondary">View Payment Plan</Button>
-                  </div>
                 </>
               ) : (
                 <EmptyState
                   icon="file"
                   title="No Active Loans"
                   description="You do not have any active loans with the society right now."
-                  action={<Button variant="primary">Apply for a Loan</Button>}
                 />
               )}
             </CardContent>
@@ -103,7 +106,7 @@ export function MemberDashboard() {
 
           <Card padding="none">
             <CardHeader className="p-6 pb-2 flex flex-row items-center justify-between">
-              <CardTitle>Recent Passbook Activity</CardTitle>
+              <CardTitle>Account Activity</CardTitle>
               <Link to="/dashboard/statements" className="text-xs font-semibold text-warm-gold hover:text-warm-gold-hover">
                 View Statements &rarr;
               </Link>
@@ -115,8 +118,8 @@ export function MemberDashboard() {
                 if (memberProfile?.shareCapital) {
                   activities.push({
                     id: 'share-capital',
-                    title: 'Share Capital Deposit',
-                    subtitle: 'Equity Membership Allotment',
+                    title: 'Share Capital',
+                    subtitle: 'Membership share capital',
                     date: memberProfile.membershipDate
                       ? format(new Date(memberProfile.membershipDate), 'dd MMM yyyy')
                       : 'Joined',
@@ -129,12 +132,12 @@ export function MemberDashboard() {
                 if (latestLoan) {
                   activities.push({
                     id: `loan-${latestLoan.id}`,
-                    title: `${latestLoan.type || 'Personal Loan'} Disbursement`,
+                    title: `${latestLoan.type || 'Loan'} outstanding`,
                     subtitle: `Account #${latestLoan.id}`,
                     date: latestLoan.createdAt
                       ? format(new Date(latestLoan.createdAt), 'dd MMM yyyy')
                       : 'Recent',
-                    amount: Number(latestLoan.outstandingPrincipal || 0),
+                    amount: latestLoan.outstandingAmount,
                     isCredit: false,
                     stamped: true,
                   })
@@ -143,7 +146,7 @@ export function MemberDashboard() {
                 if (activities.length === 0) {
                   return (
                     <div className="py-6 text-center text-sm font-body text-mahogany-muted">
-                      No recent ledger transactions recorded yet.
+                      Nothing to show yet.
                     </div>
                   )
                 }
@@ -157,7 +160,7 @@ export function MemberDashboard() {
                     date={act.date}
                     mono={
                       <span className={act.isCredit ? 'text-verdant-green font-semibold' : 'text-deep-crimson font-semibold'}>
-                        {act.isCredit ? '+' : '-'}{formatINR(act.amount)}
+                        {formatINR(act.amount)}
                       </span>
                     }
                   />

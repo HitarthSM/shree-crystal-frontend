@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { Select, Input, Textarea } from '@/components/ui/FormControls'
 import { PageHeader } from '@/components/ui/PageHeader'
+import { ErrorState } from '@/components/ui/ErrorState'
 import { SkeletonRow } from '@/components/ui/Skeleton'
 import { Plus, Trash2, X, Send } from 'lucide-react'
 import { toast } from '@/components/ui/Toast'
@@ -29,7 +30,7 @@ export function AdminNotices() {
 
   const queryClient = useQueryClient()
 
-  const { data: noticesData, isLoading } = useQuery<{ items?: Notice[]; data?: Notice[] } | Notice[]>({
+  const { data: noticesData, isLoading, isError, refetch, isRefetching } = useQuery<{ items?: Notice[]; data?: Notice[] } | Notice[]>({
     queryKey: ['notices'],
     queryFn: () => apiClient.get('/notices').then(res => res.data)
   })
@@ -153,6 +154,13 @@ export function AdminNotices() {
                 <SkeletonRow />
                 <SkeletonRow />
               </div>
+            ) : isError ? (
+              <ErrorState
+                className="m-4"
+                title="Couldn't load notices"
+                onRetry={() => refetch()}
+                isRetrying={isRefetching}
+              />
             ) : notices.length === 0 ? (
               <div className="p-8 text-center text-mahogany-muted font-body">No published notices found.</div>
             ) : (

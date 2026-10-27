@@ -4,6 +4,7 @@ import { LedgerRow } from '@/components/ui/LedgerRow'
 import { Badge } from '@/components/ui/Badge'
 import { Select } from '@/components/ui/FormControls'
 import { PageHeader } from '@/components/ui/PageHeader'
+import { ErrorState } from '@/components/ui/ErrorState'
 import { QueryChatThread } from '@/components/ui/QueryChatThread'
 import { SkeletonRow } from '@/components/ui/Skeleton'
 import { MessageSquare } from 'lucide-react'
@@ -18,7 +19,7 @@ export function AdminQueries() {
   const [selectedQueryId, setSelectedQueryId] = useState<string | null>(null)
   const queryClient = useQueryClient()
 
-  const { data: queriesData, isLoading } = useQuery<SupportQuery[]>({
+  const { data: queriesData, isLoading, isError, refetch, isRefetching } = useQuery<SupportQuery[]>({
     queryKey: ['adminQueries', filterStatus !== 'ALL' ? { status: filterStatus } : undefined],
     queryFn: () => apiClient.get('/queries', { params: filterStatus !== 'ALL' ? { status: filterStatus } : undefined }).then(res => res.data)
   })
@@ -88,7 +89,14 @@ export function AdminQueries() {
                     <SkeletonRow />
                     <SkeletonRow />
                   </div>
-                ) : queries.length === 0 ? (
+                ) : isError ? (
+              <ErrorState
+                className="m-4"
+                title="Couldn't load support queries"
+                onRetry={() => refetch()}
+                isRetrying={isRefetching}
+              />
+            ) : queries.length === 0 ? (
                   <div className="p-8 text-center text-mahogany-muted font-body">No tickets found.</div>
                 ) : (
                   queries.map((q) => (

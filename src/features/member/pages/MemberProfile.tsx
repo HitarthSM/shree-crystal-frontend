@@ -1,35 +1,21 @@
 import { Card } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
-import { Button } from '@/components/ui/Button'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { SkeletonCard } from '@/components/ui/Skeleton'
+import { ErrorState } from '@/components/ui/ErrorState'
 import { useAuthStore } from '@/store/auth.store'
 import { User, MapPin, Phone, ShieldCheck, Mail } from 'lucide-react'
-import { useQuery, useMutation } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import apiClient from '@/api/client'
 import { formatDate } from '@/lib/utils'
-import { toast } from '@/components/ui/Toast'
 import type { Member } from '@/types/member'
 
 export function MemberProfile() {
   const { user } = useAuthStore()
-  const { data: profile, isLoading } = useQuery<Member>({
+  const { data: profile, isLoading, isError, refetch, isRefetching } = useQuery<Member>({
     queryKey: ['memberProfile'],
     queryFn: () => apiClient.get('/members/me').then(res => res.data)
   })
-
-  const changeMutation = useMutation({
-    mutationFn: (data: { type: string }) => apiClient.post('/members/me/change-requests', data).then(res => res.data)
-  })
-
-  const handleUpdateKYC = async () => {
-    try {
-      const res = await changeMutation.mutateAsync({ type: 'KYC_UPDATE' })
-      toast.success(res.message || 'Change request submitted for admin approval')
-    } catch {
-      toast.error('Failed to submit change request')
-    }
-  }
 
   if (isLoading) {
     return (
@@ -45,11 +31,13 @@ export function MemberProfile() {
     )
   }
 
-  if (!profile) {
+  if (isError || !profile) {
     return (
-      <div className="p-8 text-center text-deep-crimson font-body">
-        Failed to load profile. Please refresh the page.
-      </div>
+      <ErrorState
+        title="Couldn't load your profile"
+        onRetry={() => refetch()}
+        isRetrying={isRefetching}
+      />
     )
   }
 
@@ -125,21 +113,13 @@ export function MemberProfile() {
               <div>
                 <p className="text-sm font-body text-mahogany-muted mb-1">PAN Verification</p>
                 <p className="font-data text-dark-mahogany font-medium">
-                  {profile.panEncrypted ? '•••••• Verified' : 'Verified by Society'}
+                  {profile.panEncrypted ? 'On record' : 'Not provided'}
                 </p>
               </div>
               <div className="sm:col-span-2 pt-2 border-t border-ledger-rule flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <p className="text-xs text-mahogany-muted font-body">
-                  To update your phone number, residential address, or KYC documents, submit a request for office verification.
+                  To update your phone number, residential address, or KYC documents, please contact the society office.
                 </p>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={handleUpdateKYC}
-                  isLoading={changeMutation.isPending}
-                >
-                  Request KYC Update
-                </Button>
               </div>
             </div>
           </section>

@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 import { LedgerRow } from '@/components/ui/LedgerRow'
-import { Badge, StatusDot } from '@/components/ui/Badge'
+import { Badge } from '@/components/ui/Badge'
 import { LinkButton } from '@/components/ui/Button'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { ConfirmModal, PromptModal } from '@/components/ui/Modal'
 import { SkeletonRow } from '@/components/ui/Skeleton'
+import { ErrorState } from '@/components/ui/ErrorState'
+import { useAuthStore } from '@/store/auth.store'
 import { formatINR } from '@/lib/utils'
 import { 
   Users, 
@@ -36,7 +38,9 @@ export function AdminDashboard() {
   const [approveItem, setApproveItem] = useState<{ id: string; actionType: string } | null>(null)
   const [rejectItem, setRejectItem] = useState<{ id: string; actionType: string } | null>(null)
 
-  const { data, isLoading } = useQuery<AdminDashboardData>({
+  // Only the Super Admin may approve or reject; the API refuses everyone else.
+  const canDecide = useAuthStore((state) => state.user?.role === 'super_admin')
+  const { data, isLoading, isError, refetch, isRefetching } = useQuery<AdminDashboardData>({
     queryKey: ['adminDashboard'],
     queryFn: () => apiClient.get('/dashboard/admin').then(res => res.data)
   })
@@ -79,21 +83,30 @@ export function AdminDashboard() {
   }
 
   const stats = [
-    { label: 'Registered Members', value: data?.stats.totalActiveMembers || 0, trend: 'Current Total' },
-    { label: 'Requests to Approve', value: data?.stats.pendingApprovalsCount || 0, trend: 'Action needed' },
-    { label: 'Total Loans Given', value: formatINR(data?.stats.totalLoanDisbursed || 0), trend: 'FY 24-25' },
-    { label: 'Member Deposits', value: formatINR(data?.stats.activeDeposits || 0), trend: 'FY 24-25' },
+    { label: 'Active Members', value: data ? String(data.stats.totalActiveMembers) : '—', trend: 'Current total' },
+    { label: 'Requests to Approve', value: data ? String(data.stats.pendingApprovalsCount) : '—', trend: 'Action needed' },
+    { label: 'Total Loans Given', value: formatINR(data?.stats.totalLoanDisbursed), trend: 'All disbursed loans' },
+    { label: 'Share Capital', value: formatINR(data?.stats.totalShareCapital), trend: 'Active members' },
   ]
 
   const pendingApprovals = data?.pendingApprovals || []
   const recentActivity = data?.recentActivity || []
+
+  if (isError) {
+    return (
+      <ErrorState
+        title="Couldn't load the dashboard"
+        onRetry={() => refetch()}
+        isRetrying={isRefetching}
+      />
+    )
+  }
 
   return (
     <div className="space-y-8 animate-fade-slide-up">
       <PageHeader
         title="Admin Dashboard"
         description="Society overview and day-to-day administrative tasks."
-        actions={<StatusDot status="ok" label="All Systems Working" />}
       />
 
       {/* Quick Actions Row using semantic LinkButton */}
@@ -162,6 +175,7 @@ export function AdminDashboard() {
                     date={formatDistanceToNow(new Date(item.createdAt), { addSuffix: true })}
                     className="px-6 py-4"
                     mono={
+                      canDecide ? (
                       <div className="flex items-center gap-1 mt-1">
                         <button 
                           onClick={() => setApproveItem({ id: item.id, actionType: item.actionType })}
@@ -182,6 +196,7 @@ export function AdminDashboard() {
                           <XCircle className="h-5 w-5" />
                         </button>
                       </div>
+                      ) : null
                     }
                   />
                 ))

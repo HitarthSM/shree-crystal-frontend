@@ -124,7 +124,7 @@ export function AdminMemberDetail() {
               <div className="flex justify-between items-center">
                 <span className="text-sm font-body text-mahogany-muted">Share Capital</span>
                 <span className="font-data text-sm text-dark-mahogany font-semibold">
-                  {formatINR(Number(member.shareCapital) || 0)}
+                  {formatINR(member.shareCapital)}
                 </span>
               </div>
               <div className="flex justify-between items-center">
@@ -150,10 +150,7 @@ export function AdminMemberDetail() {
             <CardContent className="p-6">
               {member.loans && member.loans.length > 0 ? (
                 member.loans.map((loan) => {
-                  const rate = Number(loan.loanType?.interestRate || 10)
-                  const principal = Number(loan.principalAmount || 0)
-                  const outstanding = Number(loan.outstandingAmount || 0)
-                  const estimatedEmi = Math.round((principal * (rate / 100)) / 12 + principal / 24)
+                  const rate = loan.loanType?.interestRate
 
                   return (
                     <div key={loan.id} className="border border-ledger-rule rounded-[4px] p-4 bg-white shadow-paper mb-4 last:mb-0">
@@ -167,15 +164,15 @@ export function AdminMemberDetail() {
                       <div className="grid grid-cols-3 gap-4">
                         <div>
                           <p className="text-xs font-body text-mahogany-muted mb-1">Principal</p>
-                          <p className="font-data text-sm text-dark-mahogany font-semibold">{formatINR(principal)}</p>
+                          <p className="font-data text-sm text-dark-mahogany font-semibold">{formatINR(loan.principalAmount)}</p>
                         </div>
                         <div>
                           <p className="text-xs font-body text-mahogany-muted mb-1">Outstanding</p>
-                          <p className="font-data text-sm font-medium text-warm-gold font-semibold">{formatINR(outstanding)}</p>
+                          <p className="font-data text-sm font-medium text-warm-gold font-semibold">{formatINR(loan.outstandingAmount)}</p>
                         </div>
                         <div>
-                          <p className="text-xs font-body text-mahogany-muted mb-1">Est. EMI ({rate}% p.a.)</p>
-                          <p className="font-data text-sm text-deep-crimson font-semibold">{formatINR(estimatedEmi)}</p>
+                          <p className="text-xs font-body text-mahogany-muted mb-1">Interest rate</p>
+                          <p className="font-data text-sm text-dark-mahogany font-semibold">{rate != null ? `${rate}% p.a.` : '—'}</p>
                         </div>
                       </div>
                     </div>

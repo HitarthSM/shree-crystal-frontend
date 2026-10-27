@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/Badge'
 import { Select, Textarea, Input } from '@/components/ui/FormControls'
 import { Button } from '@/components/ui/Button'
 import { PageHeader } from '@/components/ui/PageHeader'
+import { ErrorState } from '@/components/ui/ErrorState'
 import { QueryChatThread } from '@/components/ui/QueryChatThread'
 import { SkeletonRow } from '@/components/ui/Skeleton'
 import { MessageSquare, PlusCircle } from 'lucide-react'
@@ -20,7 +21,7 @@ export function MemberSupport() {
   const [isCreatingNew, setIsCreatingNew] = useState(false)
   const queryClient = useQueryClient()
 
-  const { data: queriesData, isLoading } = useQuery<SupportQuery[]>({
+  const { data: queriesData, isLoading, isError, refetch, isRefetching } = useQuery<SupportQuery[]>({
     queryKey: ['memberQueries'],
     queryFn: () => apiClient.get('/queries/me').then(r => r.data)
   })
@@ -30,7 +31,7 @@ export function MemberSupport() {
 
   const { data: selectedQuery, isLoading: isLoadingQuery } = useQuery<SupportQuery>({
     queryKey: ['memberQuery', selectedQueryId],
-    queryFn: () => apiClient.get(`/queries/${selectedQueryId}`).then(res => res.data),
+    queryFn: () => apiClient.get(`/queries/me/${selectedQueryId}`).then(res => res.data),
     enabled: !!selectedQueryId,
   })
 
@@ -100,7 +101,14 @@ export function MemberSupport() {
                     <SkeletonRow />
                     <SkeletonRow />
                   </div>
-                ) : queries.length === 0 ? (
+                ) : isError ? (
+              <ErrorState
+                className="m-4"
+                title="Couldn't load your questions"
+                onRetry={() => refetch()}
+                isRetrying={isRefetching}
+              />
+            ) : queries.length === 0 ? (
                   <div className="p-8 text-center text-mahogany-muted font-body">No questions found.</div>
                 ) : (
                   queries.map((q) => (

@@ -1,4 +1,5 @@
 /// <reference types="vite/client" />
+import { clearUserData } from './queryClient'
 import axios, { type InternalAxiosRequestConfig } from 'axios'
 import { useAuthStore } from '../store/auth.store'
 
@@ -25,12 +26,26 @@ apiClient.interceptors.request.use((config) => {
 // Endpoints whose 401 means "bad credentials/token", not "access token expired".
 const isAuthEndpoint = (url?: string) => !!url && /\/auth\/(login|refresh)$/.test(url)
 
+/** No refresh token is stored: the visitor was never signed in (e.g. public pages). */
+class NoSessionError extends Error {}
+
+/** The server refused the refresh token, as opposed to a network/server failure. */
+function isRefreshRejected(err: unknown): boolean {
+  if (axios.isAxiosError(err)) {
+    const status = err.response?.status
+    return status === 400 || status === 401 || status === 403
+  }
+  return false
+}
+
 let refreshPromise: Promise<string> | null = null
 
 /** Exchanges the stored refresh token for a new pair. Shared so parallel 401s refresh once. */
-function refreshAccessToken(): Promise<string> {
+async function refreshAccessToken(): Promise<string> {
+  // Another tab may have rotated the refresh token already; pick up what it stored.
+  await useAuthStore.persist.rehydrate()
   const { refreshToken, setTokens } = useAuthStore.getState()
-  if (!refreshToken) return Promise.reject(new Error('No refresh token'))
+  if (!refreshToken) throw new NoSessionError('No refresh token')
 
   refreshPromise ??= axios
     .post(`${API_BASE}/auth/refresh`, { refreshToken })
@@ -49,11 +64,7 @@ function refreshAccessToken(): Promise<string> {
 
 function endSession() {
   useAuthStore.getState().clearUser()
-  try {
-    window.localStorage.removeItem('SHREE_CRYSTAL_WEB_QUERY_CACHE')
-  } catch {
-    // Ignore storage clear failure
-  }
+  clearUserData()
   window.location.href = '/login'
 }
 
@@ -83,8 +94,13 @@ apiClient.interceptors.response.use(
       const accessToken = await refreshAccessToken()
       originalRequest.headers.Authorization = `Bearer ${accessToken}`
       return apiClient(originalRequest)
-    } catch {
-      endSession()
+    } catch (refreshError) {
+      // Only a server rejection ends the session. Offline or a 5xx must not sign the user out.
+      if (refreshError instanceof NoSessionError) {
+        useAuthStore.getState().clearUser()
+      } else if (isRefreshRejected(refreshError)) {
+        endSession()
+      }
       return Promise.reject(error)
     }
   },

@@ -4,6 +4,7 @@ import { LedgerRow } from '@/components/ui/LedgerRow'
 import { Select } from '@/components/ui/FormControls'
 import { Button } from '@/components/ui/Button'
 import { PageHeader } from '@/components/ui/PageHeader'
+import { ErrorState } from '@/components/ui/ErrorState'
 import { SearchInput } from '@/components/ui/SearchInput'
 import { SkeletonRow } from '@/components/ui/Skeleton'
 import { Download } from 'lucide-react'
@@ -18,7 +19,7 @@ export function AdminActivity() {
   const [filterRole, setFilterRole] = useState('all')
   const [search, setSearch] = useState('')
 
-  const { data: logsData, isLoading } = useQuery<{ items?: ActivityLogItem[]; data?: ActivityLogItem[] } | ActivityLogItem[]>({
+  const { data: logsData, isLoading, isError, refetch, isRefetching } = useQuery<{ items?: ActivityLogItem[]; data?: ActivityLogItem[] } | ActivityLogItem[]>({
     queryKey: ['activity', { actorType: filterRole !== 'all' ? filterRole.toUpperCase() : undefined }],
     queryFn: () => apiClient.get('/activity-log', { params: { actorType: filterRole !== 'all' ? filterRole.toUpperCase() : undefined } }).then(res => res.data)
   })
@@ -99,6 +100,13 @@ export function AdminActivity() {
                 <SkeletonRow />
                 <SkeletonRow />
               </div>
+            ) : isError ? (
+              <ErrorState
+                className="m-4"
+                title="Couldn't load the activity log"
+                onRetry={() => refetch()}
+                isRetrying={isRefetching}
+              />
             ) : filteredLogs.length === 0 ? (
               <div className="p-8 text-center text-mahogany-muted font-body">No activity records found.</div>
             ) : (

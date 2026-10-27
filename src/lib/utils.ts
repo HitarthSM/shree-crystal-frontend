@@ -6,13 +6,16 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-/** Format currency as Indian Rupee */
-export function formatINR(amount: number): string {
+/** Format currency as Indian Rupee. Missing or malformed amounts show "—", never ₹0.00. */
+export function formatINR(amount: number | string | null | undefined): string {
+  if (amount === null || amount === undefined || amount === '') return '—'
+  const value = typeof amount === 'string' ? Number(amount) : amount
+  if (!Number.isFinite(value)) return '—'
   return new Intl.NumberFormat('en-IN', {
     style: 'currency',
     currency: 'INR',
     minimumFractionDigits: 2,
-  }).format(amount)
+  }).format(value)
 }
 
 /** Format date as DD MMM YYYY */
